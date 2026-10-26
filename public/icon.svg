@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="104" fill="#1c1917"/>
+  <circle cx="256" cy="256" r="216" fill="none" stroke="#f59e0b" stroke-width="6" opacity="0.4"/>
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8 8" opacity="0.6"/>
+  
+  <!-- Central Scales of Justice Pillar -->
+  <g transform="translate(256, 256)" stroke="#f59e0b" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Top finial -->
+    <circle cx="0" cy="-140" r="14" fill="#f59e0b"/>
+    <!-- Central column -->
+    <line x1="0" y1="-126" x2="0" y2="120"/>
+    <!-- Base pedestal -->
+    <path d="M-60 120 L60 120 M-40 100 L40 100 M-75 140 L75 140" stroke-width="12"/>
+    
+    <!-- Balance beam -->
+    <path d="M-150 -70 L150 -70" stroke-width="14"/>
+    <circle cx="0" cy="-70" r="10" fill="#f59e0b"/>
+    
+    <!-- Left pan strings & pan -->
+    <line x1="-140" y1="-70" x2="-180" y2="30" stroke-width="6"/>
+    <line x1="-140" y1="-70" x2="-100" y2="30" stroke-width="6"/>
+    <path d="M-195 30 Q-140 75 -85 30 Z" fill="#fbbf24" stroke="#f59e0b" stroke-width="6"/>
+    
+    <!-- Right pan strings & pan -->
+    <line x1="140" y1="-70" x2="100" y2="30" stroke-width="6"/>
+    <line x1="140" y1="-70" x2="180" y2="30" stroke-width="6"/>
+    <path d="M85 30 Q140 75 195 30 Z" fill="#fbbf24" stroke="#f59e0b" stroke-width="6"/>
+  </g>
+
+  <!-- Legal emblem stars / accents -->
+  <g fill="#fbbf24" opacity="0.9">
+    <circle cx="256" cy="74" r="6"/>
+    <circle cx="256" cy="438" r="6"/>
+    <circle cx="74" cy="256" r="6"/>
+    <circle cx="438" cy="256" r="6"/>
+  </g>
+</svg>
