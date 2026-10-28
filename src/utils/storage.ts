@@ -1,54 +1,76 @@
 import { MinisterialDecision } from '../types/decision';
-import { SEED_DECISIONS } from '../data/seedDecisions';
 
 const STORAGE_KEY = 'ministerial_decisions_law14_2025';
+const ENFORCED_PDF_FLAG = 'filter_only_with_pdf_enforced_v1';
 
+/**
+ * Returns stored decisions, strictly preserving only decisions that have an official PDF copy (pdfAttachment)
+ */
 export function getStoredDecisions(): MinisterialDecision[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_DECISIONS));
-      return SEED_DECISIONS;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+      localStorage.setItem(ENFORCED_PDF_FLAG, 'true');
+      return [];
     }
+
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      // Check if official 2025 series (like dec-2025-148) is present
-      const hasOfficialSeries = parsed.some((d: any) => d.decisionNumber === '148');
-      if (!hasOfficialSeries) {
-        // Upgrade/refresh with the official decisions while keeping any custom decisions the user created
-        const existingIds = new Set(parsed.map((d: any) => d.id));
-        const merged = [...parsed];
-        for (const seed of SEED_DECISIONS) {
-          if (!existingIds.has(seed.id)) {
-            merged.push(seed);
-          }
-        }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-        return merged;
+    if (Array.isArray(parsed)) {
+      // Filter out any decision that does not have an official PDF attachment
+      const filtered = parsed.filter((d: any) => Boolean(d.pdfAttachment));
+      if (filtered.length !== parsed.length) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
       }
-      return parsed;
+      return filtered;
     }
-    return SEED_DECISIONS;
+    return [];
   } catch (error) {
     console.error('Error reading decisions from localStorage:', error);
-    return SEED_DECISIONS;
+    return [];
   }
 }
 
+/**
+ * Saves decisions to localStorage, ensuring only decisions with official PDF attachments are preserved
+ */
 export function saveDecisions(decisions: MinisterialDecision[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(decisions));
+    const filtered = decisions.filter((d) => Boolean(d.pdfAttachment));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    localStorage.setItem(ENFORCED_PDF_FLAG, 'true');
   } catch (error) {
     console.error('Error saving decisions to localStorage:', error);
   }
 }
 
+/**
+ * Explicitly removes all decisions that do not have an official scanned PDF copy
+ */
+export function deleteDecisionsWithoutPdf(): MinisterialDecision[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const list: MinisterialDecision[] = raw ? JSON.parse(raw) : [];
+    const filtered = list.filter((d) => Boolean(d.pdfAttachment));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    localStorage.setItem(ENFORCED_PDF_FLAG, 'true');
+    return filtered;
+  } catch (error) {
+    console.error('Error deleting non-pdf decisions:', error);
+    return [];
+  }
+}
+
+/**
+ * Resets storage to an empty official library waiting for PDF uploads
+ */
 export function resetToSeedDecisions(): MinisterialDecision[] {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_DECISIONS));
-    return SEED_DECISIONS;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+    localStorage.setItem(ENFORCED_PDF_FLAG, 'true');
+    return [];
   } catch (error) {
     console.error('Error resetting decisions:', error);
-    return SEED_DECISIONS;
+    return [];
   }
 }

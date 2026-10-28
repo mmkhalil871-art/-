@@ -6,6 +6,7 @@ import {
 import {
   getStoredDecisions,
   saveDecisions,
+  deleteDecisionsWithoutPdf,
   resetToSeedDecisions
 } from './utils/storage';
 import { Header } from './components/Header';
@@ -23,6 +24,7 @@ import { LaborLawModal } from './components/LaborLawModal';
 import { LaborLawBanner } from './components/LaborLawBanner';
 import { LawUploadAndSyncModal } from './components/LawUploadAndSyncModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
+import { DocumentLibraryModal } from './components/DocumentLibraryModal';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { LaborLawInfo } from './data/laborLawData';
 import { getStoredLaborLaw, saveStoredLaborLaw } from './utils/lawStorage';
@@ -62,19 +64,30 @@ function MainDashboard() {
   const [isLaborLawModalOpen, setIsLaborLawModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [isDocumentLibraryOpen, setIsDocumentLibraryOpen] = useState(false);
 
   // Notification Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const loaded = getStoredDecisions();
-    setDecisions(loaded);
+    // Delete all decisions that do not have an official PDF copy as requested by the user
+    const cleaned = deleteDecisionsWithoutPdf();
+    setDecisions(cleaned);
   }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  const handleDeleteNonPdfDecisions = () => {
+    const cleaned = deleteDecisionsWithoutPdf();
+    const removedCount = decisions.length - cleaned.length;
+    setDecisions(cleaned);
+    showToast(`تم حذف ${removedCount} قرار لا يملك مستند PDF نسخة رسمية.`);
+  };
+
+  const nonPdfCount = decisions.filter((d) => !d.pdfAttachment).length;
 
   // Filtered decisions list
   const filteredDecisions = useMemo(() => {
@@ -230,7 +243,7 @@ function MainDashboard() {
   const handleDecisionsUpdated = (updatedList: MinisterialDecision[]) => {
     setDecisions(updatedList);
     saveDecisions(updatedList);
-    showToast('تم تحديث ارتباطات وتصنيفات القرارات الوزارية بنجاح.');
+    showToast('تم تنظيم وتحديث قاعدة بيانات القرارات الوزارية بنجاح.');
   };
 
   const isFilterActive =
@@ -274,6 +287,7 @@ function MainDashboard() {
         onOpenLaborLaw={() => setIsLaborLawModalOpen(true)}
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
         onOpenThemeSelector={() => setIsThemeModalOpen(true)}
+        onOpenDocumentLibrary={() => setIsDocumentLibraryOpen(true)}
         totalDecisionsCount={decisions.length}
         decisions={decisions}
         law={currentLaw}
@@ -306,33 +320,44 @@ function MainDashboard() {
             </h1>
             <p className="text-xs sm:text-sm opacity-85 leading-relaxed max-w-2xl">
               مرجع قانوني رسمي متكامل يتيح للباحثين، المحامين، مديري الموارد البشرية، والشركات
-              استعراض نصوص القرارات الوزارية، طباعتها بالصيغة المعتمدة، وتخصيص المظهر والألوان
-              مع إمكانية تشغيل المنظومة كبرنامج كامل على جهاز الكمبيوتر دون الحاجة إلى اتصال بالإنترنت.
+              استعراض نصوص القرارات الوزارية الموثقة بنسخ رسمية (PDF)، وطباعتها وتخصيص المظهر،
+              مع إمكانية رفع كافة المستندات ليقوم النظام بتنظيمها في المكتبة آلياً نيابة عنك.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 flex-wrap">
+            {/* Smart Document Library & Ingestion Button */}
+            <button
+              type="button"
+              onClick={() => setIsDocumentLibraryOpen(true)}
+              className="inline-flex items-center justify-center gap-2 px-4.5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs sm:text-sm shadow-md transition-all cursor-pointer hover:scale-[1.02] border border-emerald-400/40"
+              title="رفع كافة المستندات المتعلقة بالقرارات الوزارية وسيقوم النظام بتنظيمها نيابة عنك"
+            >
+              <FolderOpen className="w-4 h-4 text-emerald-200" />
+              <span>مكتبة الوثائق والرفع الذكي 📁</span>
+            </button>
+
             {/* Primary Action: Run as Program Without Internet */}
             <button
               type="button"
               onClick={() => setIsInstallModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-white font-bold rounded-lg text-xs sm:text-sm shadow-md transition-all cursor-pointer hover:scale-[1.02]"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-white font-bold rounded-lg text-xs sm:text-sm shadow-md transition-all cursor-pointer hover:scale-[1.02]"
               style={{ backgroundColor: activeAccent.colorHex }}
               title="خيارات تشغيل المنظومة كبرنامج حاسب آلي بدون إنترنت"
             >
               <WifiOff className="w-4 h-4" />
-              <span>تشغيل كبرنامج بدون إنترنت</span>
+              <span>تشغيل بدون إنترنت</span>
             </button>
 
             {/* Appearance Customizer Shortcut */}
             <button
               type="button"
               onClick={() => setIsThemeModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-white/10 hover:bg-white/15 text-white border border-white/20 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/10 hover:bg-white/15 text-white border border-white/20 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
               title="تغيير المظهر ودرجات الألوان وحجم الخط"
             >
               <Palette className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
-              <span>المظهر والألوان</span>
+              <span className="hidden sm:inline">المظهر</span>
             </button>
 
             <button
@@ -341,10 +366,10 @@ function MainDashboard() {
                 setEditingDecision(null);
                 setIsFormOpen(true);
               }}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-stone-200 border border-white/10 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-white/5 hover:bg-white/10 text-stone-200 border border-white/10 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>إضافة قرار جديد</span>
+              <span>إضافة قرار</span>
             </button>
           </div>
         </div>
@@ -352,6 +377,31 @@ function MainDashboard() {
 
       {/* Stats Bar */}
       <StatsBar decisions={decisions} />
+
+      {/* Quick Ingestion Callout Strip */}
+      <div
+        className={`border-b px-4 sm:px-6 lg:px-8 py-2.5 text-xs no-print transition-colors ${
+          activeTheme.isDark
+            ? 'bg-emerald-950/40 border-emerald-900/50 text-emerald-300'
+            : 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <FolderOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span>
+              <strong>قاعدة التوثيق الرسمي:</strong> تم حصر المكتبة على القرارات التي تملك نسخة رسمية ممسوحة (PDF). يمكنك رفع مستنداتك دفعة واحدة وسيقوم النظام بتنظيمها وإدراجها فورياً.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsDocumentLibraryOpen(true)}
+            className="font-bold underline hover:opacity-80 cursor-pointer whitespace-nowrap text-emerald-700 dark:text-emerald-300"
+          >
+            فتح مكتبة المستندات والرفع الآن ←
+          </button>
+        </div>
+      </div>
 
       {/* Filter and Search Bar */}
       <FilterBar
@@ -370,6 +420,8 @@ function MainDashboard() {
         totalFiltered={filteredDecisions.length}
         onResetFilters={handleResetFilters}
         isFilterActive={isFilterActive}
+        onDeleteNonPdfDecisions={handleDeleteNonPdfDecisions}
+        nonPdfCount={nonPdfCount}
       />
 
       {/* Main Content Area */}
@@ -383,7 +435,7 @@ function MainDashboard() {
 
         {filteredDecisions.length === 0 ? (
           <div
-            className={`rounded-2xl border p-12 text-center max-w-md mx-auto my-8 ${
+            className={`rounded-2xl border p-8 sm:p-12 text-center max-w-xl mx-auto my-8 ${
               activeTheme.isDark
                 ? 'bg-zinc-850 border-zinc-700'
                 : activeTheme.id === 'parchment'
@@ -391,22 +443,24 @@ function MainDashboard() {
                 : 'bg-white border-stone-200'
             }`}
           >
-            <div className="w-12 h-12 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center mx-auto opacity-50 mb-3">
-              <FolderOpen className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-3.5 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="w-8 h-8" />
             </div>
-            <h3 className="text-base font-bold mb-1">
-              لم يتم العثور على قرارات مطابقة
+            <h3 className="text-base sm:text-lg font-bold mb-1.5">
+              تم حذف كافة القرارات التي لا يوجد لها مستند PDF نسخة رسمية
             </h3>
-            <p className="text-xs opacity-75 mb-4 leading-relaxed">
-              لا توجد قرارات وزارية تطابق خيارات البحث الحالية. يمكنك تعديل كلمات البحث أو تصفية الفلاتر.
+            <p className="text-xs opacity-80 mb-5 leading-relaxed max-w-md mx-auto">
+              تم تطبيق قاعدة الحصر والتوثيق الرسمي: أصبحت مكتبة القرارات مقتصرة حصراً على القرارات الموثقة المرفق بها نسخة رسمية ممسوحة ضوئياً (PDF).
+              يمكنك الآن رفع مستندات القرارات وسيتولى المحرك الذكي تنظيمها وتصنيفها وربطها بمواد قانون العمل 14 تلقائياً.
             </p>
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
-                onClick={handleResetFilters}
-                className="px-3.5 py-2 bg-black/5 dark:bg-white/10 hover:opacity-100 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                onClick={() => setIsDocumentLibraryOpen(true)}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-2"
               >
-                مسح كل الفلاتر
+                <FolderOpen className="w-4 h-4" />
+                <span>فتح مكتبة المستندات ورفع النسخ الرسمية (PDF) 📁</span>
               </button>
               <button
                 type="button"
@@ -414,10 +468,9 @@ function MainDashboard() {
                   setEditingDecision(null);
                   setIsFormOpen(true);
                 }}
-                className="px-3.5 py-2 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-                style={{ backgroundColor: activeAccent.colorHex }}
+                className="px-4 py-2.5 bg-black/5 dark:bg-white/10 hover:opacity-100 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
               >
-                إضافة قرار جديد الآن
+                + إضافة قرار جديد مع إرفاق PDF
               </button>
             </div>
           </div>
@@ -478,12 +531,20 @@ function MainDashboard() {
             <span>نظام قانوني مؤسسي للتوثيق والاستعراض والطباعة الرسمية</span>
             <button
               type="button"
+              onClick={() => setIsDocumentLibraryOpen(true)}
+              className="hover:underline flex items-center gap-1 cursor-pointer text-emerald-400"
+            >
+              <FolderOpen className="w-3.5 h-3.5" />
+              <span>مكتبة المستندات</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setIsThemeModalOpen(true)}
               className="hover:underline flex items-center gap-1 cursor-pointer"
               style={{ color: activeAccent.colorHex }}
             >
               <Palette className="w-3.5 h-3.5" />
-              <span>تغيير المظهر</span>
+              <span>المظهر</span>
             </button>
           </div>
         </div>
@@ -575,6 +636,16 @@ function MainDashboard() {
       <ThemeSelectorModal
         isOpen={isThemeModalOpen}
         onClose={() => setIsThemeModalOpen(false)}
+      />
+
+      {/* Document Library & Smart Auto-Organizer Modal */}
+      <DocumentLibraryModal
+        isOpen={isDocumentLibraryOpen}
+        onClose={() => setIsDocumentLibraryOpen(false)}
+        decisions={decisions}
+        onDecisionsUpdated={handleDecisionsUpdated}
+        law={currentLaw}
+        onViewDecision={handleViewDecision}
       />
     </div>
   );

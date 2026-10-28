@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, LayoutGrid, List, Star, Filter } from 'lucide-react';
+import { Search, X, LayoutGrid, List, Star, Filter, Trash2, Printer } from 'lucide-react';
 import { CATEGORIES, STATUS_LIST } from '../data/seedDecisions';
 import { ViewMode } from '../types/decision';
 import { useTheme } from '../context/ThemeContext';
@@ -20,6 +20,8 @@ interface FilterBarProps {
   totalFiltered: number;
   onResetFilters: () => void;
   isFilterActive: boolean;
+  onDeleteNonPdfDecisions?: () => void;
+  nonPdfCount?: number;
 }
 
 export const FilterBar: React.FC<FilterBarProps> = ({
@@ -38,6 +40,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   totalFiltered,
   onResetFilters,
   isFilterActive,
+  onDeleteNonPdfDecisions,
+  nonPdfCount = 0,
 }) => {
   const { activeTheme, activeAccent } = useTheme();
 
@@ -149,7 +153,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </div>
         </div>
 
-        {/* Secondary filters row: Category, Status, Year, Reset */}
+        {/* Secondary filters row: Category, Status, Year, Reset, Delete Non-PDF Action */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs">
           <div className="flex flex-wrap items-center gap-2">
             {/* Category Dropdown */}
@@ -231,18 +235,44 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 إعادة ضبط الفلاتر
               </button>
             )}
+
+            {/* Button to delete decisions without official PDF */}
+            {nonPdfCount > 0 && onDeleteNonPdfDecisions && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (
+                    confirm(
+                      `هل ترغب بحذف كافة القرارات التي لا تملك نسخة رسمية ممسوحة (PDF) والبالغ عددها (${nonPdfCount}) قراراً؟`
+                    )
+                  ) {
+                    onDeleteNonPdfDecisions();
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800 hover:bg-rose-100 cursor-pointer transition-colors mr-2"
+                title="احذف كافة القرارات التي لا يوجد لها مستند بي دي اف نسخة رسمية"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                <span>حذف {nonPdfCount} قرار بدون مستند PDF رسمي</span>
+              </button>
+            )}
           </div>
 
           {/* Results count text */}
-          <div className="opacity-75">
-            <span>عدد النتائج: </span>
-            <span
-              className="font-mono tabular-nums font-bold"
-              style={{ color: activeAccent.colorHex }}
-            >
-              {totalFiltered}
+          <div className="opacity-75 flex items-center gap-2">
+            <div>
+              <span>عدد النتائج: </span>
+              <span
+                className="font-mono tabular-nums font-bold"
+                style={{ color: activeAccent.colorHex }}
+              >
+                {totalFiltered}
+              </span>
+              <span> قرار وزاري موثق</span>
+            </div>
+            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-300/50">
+              PDF رسمي فقط ✓
             </span>
-            <span> قرار وزاري</span>
           </div>
         </div>
       </div>

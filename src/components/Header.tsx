@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Scale, BookOpen, Download, FileDown, Palette } from 'lucide-react';
+import { Plus, Scale, BookOpen, Download, FileDown, Palette, FolderOpen } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 import { MinisterialDecision } from '../types/decision';
 import { LaborLawInfo } from '../data/laborLawData';
@@ -12,6 +12,7 @@ interface HeaderProps {
   onOpenLaborLaw: () => void;
   onOpenSyncModal?: () => void;
   onOpenThemeSelector: () => void;
+  onOpenDocumentLibrary: () => void;
   totalDecisionsCount: number;
   decisions?: MinisterialDecision[];
   law?: LaborLawInfo;
@@ -24,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenLaborLaw,
   onOpenSyncModal,
   onOpenThemeSelector,
+  onOpenDocumentLibrary,
   totalDecisionsCount,
   decisions = [],
   law,
@@ -57,7 +59,18 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Zone 2: Concise Nav Links */}
-          <nav className="hidden lg:flex items-center gap-5 text-sm font-medium opacity-90">
+          <nav className="hidden lg:flex items-center gap-4 text-sm font-medium opacity-90">
+            {/* Smart Document Library Ingest Link */}
+            <button
+              type="button"
+              onClick={onOpenDocumentLibrary}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer border border-emerald-400/40 bg-emerald-950/60 text-emerald-300 hover:bg-emerald-900/60 hover:text-emerald-200"
+              title="رفع مستندات القرارات الوزارية وتنظيمها آلياً في المكتبة"
+            >
+              <FolderOpen className="w-4 h-4 text-emerald-400" />
+              <span>مكتبة الوثائق والرفع الذكي 📁</span>
+            </button>
+
             <button
               type="button"
               onClick={onOpenLaborLaw}
@@ -103,8 +116,19 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </nav>
 
-          {/* Zone 3: Theme, Install & Add Actions */}
+          {/* Zone 3: Theme, Library, Install & Add Actions */}
           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {/* Quick Mobile/Tablet Library button */}
+            <button
+              type="button"
+              onClick={onOpenDocumentLibrary}
+              className="lg:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/60 text-emerald-300 text-xs font-semibold"
+              title="مكتبة الوثائق والرفع الذكي"
+            >
+              <FolderOpen className="w-4 h-4 text-emerald-400" />
+              <span className="hidden sm:inline">المكتبة</span>
+            </button>
+
             {/* Theme & Appearance Switcher */}
             <button
               type="button"
