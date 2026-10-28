@@ -13,7 +13,8 @@ import {
   FileDown
 } from 'lucide-react';
 import { MinisterialDecision } from '../types/decision';
-import { exportDecisionAsWord, exportDecisionAsText, exportDecisionAsPdf } from '../utils/exportUtils';
+import { exportDecisionAsWord, exportDecisionAsText } from '../utils/exportUtils';
+import { useTheme } from '../context/ThemeContext';
 
 export type DecisionModalTab = 'scanned_pdf' | 'written_text' | 'summary' | 'split';
 
@@ -35,47 +36,56 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
   onToggleFavorite,
 }) => {
   const [showSaveMenu, setShowSaveMenu] = useState(false);
+  const { activeTheme, activeAccent } = useTheme();
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'نافذ':
       case 'سارٍ':
-        return 'text-emerald-700 font-semibold';
+        return 'text-emerald-600 dark:text-emerald-400 font-semibold';
       case 'معدل':
-        return 'text-amber-700 font-semibold';
+        return 'text-amber-600 dark:text-amber-400 font-semibold';
       case 'ملغى':
-        return 'text-rose-700 font-semibold';
+        return 'text-rose-600 dark:text-rose-400 font-semibold';
       default:
-        return 'text-stone-700';
+        return 'opacity-75';
     }
   };
 
   return (
-    <article className="group bg-white rounded-xl border border-stone-200 p-5 sm:p-6 hover:border-amber-400 hover:shadow-md transition-all duration-200 flex flex-col justify-between">
+    <article
+      className={`group rounded-xl border p-5 sm:p-6 transition-all duration-200 flex flex-col justify-between shadow-2xs hover:shadow-md ${
+        activeTheme.isDark
+          ? 'bg-zinc-800/80 border-zinc-700/80 hover:border-zinc-500 text-zinc-100'
+          : activeTheme.id === 'parchment'
+          ? 'bg-[#fffdf9] border-[#e4d7c5] hover:border-[#b48d61] text-[#281d14]'
+          : 'bg-white border-stone-200 hover:border-stone-400 text-stone-900'
+      }`}
+    >
       <div>
         {/* Top Kicker: Clean unboxed metadata with typographic separators */}
-        <div className="flex items-center justify-between text-xs text-stone-500 mb-2">
+        <div className="flex items-center justify-between text-xs opacity-75 mb-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono tabular-nums text-stone-700 font-medium">
+            <span className="font-mono tabular-nums font-semibold">
               قرار وزاري رقم {decision.decisionNumber} لسنة {decision.year}
             </span>
-            <span aria-hidden="true" className="text-stone-300">·</span>
-            <span className="text-stone-600">{decision.category}</span>
-            <span aria-hidden="true" className="text-stone-300">·</span>
+            <span aria-hidden="true" className="opacity-40">·</span>
+            <span>{decision.category}</span>
+            <span aria-hidden="true" className="opacity-40">·</span>
             <span className={getStatusColor(decision.status)}>
               {decision.status}
             </span>
             {decision.pdfAttachment ? (
               <>
-                <span aria-hidden="true" className="text-stone-300">·</span>
-                <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded text-[11px] font-bold">
+                <span aria-hidden="true" className="opacity-40">·</span>
+                <span className="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300/60 px-1.5 py-0.5 rounded text-[11px] font-bold">
                   ✓ نسخة ممسوحة ضوئياً (PDF)
                 </span>
               </>
             ) : (
               <>
-                <span aria-hidden="true" className="text-stone-300">·</span>
-                <span className="text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded text-[11px]">
+                <span aria-hidden="true" className="opacity-40">·</span>
+                <span className="opacity-60 bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded text-[11px]">
                   النسخة الممسوحة: لم تُرفع
                 </span>
               </>
@@ -86,81 +96,79 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           <button
             type="button"
             onClick={() => onToggleFavorite(decision.id)}
-            className="text-stone-400 hover:text-amber-500 p-1 transition-colors cursor-pointer"
+            className="p-1 rounded-md opacity-60 hover:opacity-100 transition-colors cursor-pointer"
             title={decision.isFavorite ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'}
           >
             <Star
               className={`w-4 h-4 ${
-                decision.isFavorite ? 'fill-amber-400 text-amber-500' : ''
+                decision.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-stone-400'
               }`}
             />
           </button>
         </div>
 
-        {/* Title: clickable link for instant view */}
-        <h3 className="text-base sm:text-lg font-bold text-stone-900 leading-snug group-hover:text-amber-700 transition-colors mb-3">
-          <button
-            type="button"
-            onClick={() => onView(decision)}
-            className="text-right hover:underline cursor-pointer block"
-          >
-            {decision.title}
-          </button>
+        {/* Title */}
+        <h3
+          onClick={() => onView(decision, 'summary')}
+          className="text-base font-bold tracking-tight mb-2 cursor-pointer leading-snug hover:opacity-85 transition-opacity"
+        >
+          {decision.title}
         </h3>
 
-        {/* Preamble preview snippet */}
-        <p className="text-xs sm:text-sm text-stone-600 line-clamp-2 leading-relaxed mb-4">
-          {decision.preamble}
+        {/* Summary or Legal Basis */}
+        <p className="text-xs opacity-80 line-clamp-3 mb-4 leading-relaxed font-sans">
+          {decision.legalBasisSummary || decision.executingSubject || decision.preamble}
         </p>
 
-        {/* Related Law Articles & Execution Info */}
-        <div className="space-y-2 text-xs border-t border-stone-100 pt-3 mb-4">
-          {decision.legalBasisSummary ? (
-            <div className="bg-amber-50/90 border border-amber-200/90 rounded-lg p-2 text-amber-950 font-medium">
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-900 mb-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
-                <span>السند التشريعي المباشر:</span>
-              </div>
-              <div className="text-[11px] leading-relaxed text-amber-900">
-                {decision.legalBasisSummary}
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-stone-700 font-medium shrink-0">مواد القانون المنفذة:</span>
-              <span className="text-amber-800 font-mono">
-                {decision.relatedLawArticles.join(' · ')}
-              </span>
-            </div>
-          )}
-
-          {decision.executingSubject && (
-            <div className="text-[11px] text-stone-600 flex items-center gap-1.5">
-              <span className="font-bold text-stone-700">موضوع التنفيذ:</span>
-              <span className="text-stone-800">{decision.executingSubject}</span>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 flex-wrap text-stone-500 text-[11px]">
-            <span>تاريخ الصدور: {decision.issueDate}</span>
-            <span aria-hidden="true">·</span>
-            <span>السريان: {decision.effectiveDate}</span>
-            <span aria-hidden="true">·</span>
-            <span>{decision.articles.length} مواد</span>
+        {/* Metadata info: Dates & Articles */}
+        <div className="space-y-1.5 text-xs opacity-70 mb-4 border-t border-black/5 dark:border-white/5 pt-3">
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 opacity-60" />
+            <span>تاريخ الإصدار: </span>
+            <span className="font-mono tabular-nums">{decision.issueDate}</span>
+            <span aria-hidden="true" className="opacity-40">·</span>
+            <span>الجريدة: {decision.gazetteIssue}</span>
           </div>
+
+          {decision.relatedLawArticles && decision.relatedLawArticles.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Layers className="w-3.5 h-3.5 opacity-60" />
+              <span>المواد المنفذة:</span>
+              <div className="flex items-center gap-1 flex-wrap">
+                {decision.relatedLawArticles.map((art, idx) => (
+                  <span
+                    key={idx}
+                    className="font-mono tabular-nums px-1.5 py-0.2 rounded text-[11px] font-semibold border"
+                    style={{
+                      backgroundColor: `${activeAccent.colorHex}15`,
+                      color: activeAccent.colorHex,
+                      borderColor: `${activeAccent.colorHex}35`,
+                    }}
+                  >
+                    {art}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Action Footer: View, Print, Save, Edit */}
-      <div className="border-t border-stone-100 pt-3 flex items-center justify-between gap-2 flex-wrap">
-        {/* Primary View: ملخص احكام القرار */}
+      {/* Card Actions Footer */}
+      <div className="flex items-center justify-between gap-2 pt-3 border-t border-black/5 dark:border-white/5 flex-wrap">
+        {/* ملخص احكام القرار Button */}
         <button
           type="button"
           onClick={() => onView(decision, 'summary')}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-stone-900 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 rounded-md transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors cursor-pointer"
+          style={{
+            backgroundColor: `${activeAccent.colorHex}15`,
+            borderColor: `${activeAccent.colorHex}35`,
+            color: activeAccent.colorHex,
+          }}
           title="ملخص احكام القرار"
         >
-          <Eye className="w-3.5 h-3.5 text-amber-700" />
+          <Eye className="w-3.5 h-3.5" />
           <span>ملخص احكام القرار</span>
         </button>
 
@@ -172,8 +180,8 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
             onClick={() => onView(decision, 'scanned_pdf')}
             className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-md border transition-colors cursor-pointer ${
               decision.pdfAttachment
-                ? 'bg-rose-50 text-rose-900 border-rose-300 hover:bg-rose-100'
-                : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'
+                ? 'bg-rose-50 text-rose-900 border-rose-300 dark:bg-rose-950/60 dark:text-rose-200 dark:border-rose-800 hover:bg-rose-100'
+                : 'opacity-80 border-black/10 dark:border-white/10 hover:opacity-100'
             }`}
             title={
               decision.pdfAttachment
@@ -181,12 +189,12 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                 : 'النسخة الرسمية: رفع واستعراض النسخة الممسوحة ضوئياً (PDF)'
             }
           >
-            <Printer className="w-3.5 h-3.5 text-rose-600" />
+            <Printer className="w-3.5 h-3.5 text-rose-500" />
             <span>النسخة الرسمية (PDF)</span>
             {decision.pdfAttachment ? (
-              <span className="text-[10px] text-emerald-700 font-bold">✓</span>
+              <span className="text-[10px] text-emerald-600 font-bold">✓</span>
             ) : (
-              <span className="text-[10px] text-stone-400 font-normal">[رفع]</span>
+              <span className="text-[10px] opacity-60 font-normal">[رفع]</span>
             )}
           </button>
 
@@ -194,10 +202,10 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           <button
             type="button"
             onClick={() => exportDecisionAsWord(decision)}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-sky-800 bg-sky-50 border border-sky-200 hover:bg-sky-100 rounded-md transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-sky-700 bg-sky-50 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-300/60 hover:bg-sky-100 rounded-md transition-colors cursor-pointer"
             title="النسخة المكتوبة: تحميل بصيغة Word (.doc) لتيسير النقل منها"
           >
-            <FileDown className="w-3.5 h-3.5 text-sky-600" />
+            <FileDown className="w-3.5 h-3.5 text-sky-500" />
             <span>النسخة المكتوبة (Word)</span>
           </button>
 
@@ -206,11 +214,15 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
             <button
               type="button"
               onClick={() => setShowSaveMenu(!showSaveMenu)}
-              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-stone-700 bg-white border border-stone-200 hover:bg-stone-50 rounded-md transition-colors cursor-pointer"
+              className={`inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium border rounded-md transition-colors cursor-pointer ${
+                activeTheme.isDark
+                  ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700'
+                  : 'bg-white border-stone-200 text-stone-700 hover:bg-stone-50'
+              }`}
               title="المزيد من خيارات الحفظ والاستعراض"
             >
-              <Download className="w-3.5 h-3.5 text-stone-600" />
-              <ChevronDown className="w-3 h-3 text-stone-400" />
+              <Download className="w-3.5 h-3.5 opacity-75" />
+              <ChevronDown className="w-3 h-3 opacity-60" />
             </button>
 
             {showSaveMenu && (
@@ -219,17 +231,23 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                   className="fixed inset-0 z-20"
                   onClick={() => setShowSaveMenu(false)}
                 />
-                <div className="absolute left-0 bottom-full mb-1.5 w-60 bg-white rounded-lg shadow-lg border border-stone-200 py-1 z-30 text-xs font-cairo">
+                <div
+                  className={`absolute left-0 bottom-full mb-1.5 w-60 rounded-lg shadow-xl border py-1 z-30 text-xs font-cairo ${
+                    activeTheme.isDark
+                      ? 'bg-zinc-800 border-zinc-700 text-zinc-100'
+                      : 'bg-white border-stone-200 text-stone-800'
+                  }`}
+                >
                   <button
                     type="button"
                     onClick={() => {
                       exportDecisionAsWord(decision);
                       setShowSaveMenu(false);
                     }}
-                    className="w-full text-right px-3 py-2 text-stone-700 hover:bg-stone-50 flex items-center justify-between cursor-pointer"
+                    className="w-full text-right px-3 py-2 opacity-90 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-between cursor-pointer"
                   >
                     <span>تحميل النسخة المكتوبة Word (.doc)</span>
-                    <FileDown className="w-3.5 h-3.5 text-sky-600" />
+                    <FileDown className="w-3.5 h-3.5 text-sky-500" />
                   </button>
                   <button
                     type="button"
@@ -237,10 +255,10 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                       setShowSaveMenu(false);
                       onView(decision, 'written_text');
                     }}
-                    className="w-full text-right px-3 py-2 text-stone-700 hover:bg-stone-50 flex items-center justify-between cursor-pointer"
+                    className="w-full text-right px-3 py-2 opacity-90 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-between cursor-pointer"
                   >
                     <span>استعراض النص المكتوب للنسخ</span>
-                    <Eye className="w-3.5 h-3.5 text-stone-600" />
+                    <Eye className="w-3.5 h-3.5 opacity-60" />
                   </button>
                   <button
                     type="button"
@@ -248,10 +266,10 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                       setShowSaveMenu(false);
                       onView(decision, 'scanned_pdf');
                     }}
-                    className="w-full text-right px-3 py-2 text-stone-700 hover:bg-stone-50 flex items-center justify-between cursor-pointer border-t border-stone-100"
+                    className="w-full text-right px-3 py-2 opacity-90 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-between cursor-pointer border-t border-black/5 dark:border-white/5"
                   >
                     <span>استعراض / رفع النسخة الممسوحة (PDF)</span>
-                    <Printer className="w-3.5 h-3.5 text-rose-600" />
+                    <Printer className="w-3.5 h-3.5 text-rose-500" />
                   </button>
                   <button
                     type="button"
@@ -259,10 +277,10 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                       exportDecisionAsText(decision);
                       setShowSaveMenu(false);
                     }}
-                    className="w-full text-right px-3 py-2 text-stone-700 hover:bg-stone-50 flex items-center justify-between cursor-pointer border-t border-stone-100"
+                    className="w-full text-right px-3 py-2 opacity-90 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-between cursor-pointer border-t border-black/5 dark:border-white/5"
                   >
                     <span>حفظ ملف نصي (.txt)</span>
-                    <FileText className="w-3.5 h-3.5 text-stone-600" />
+                    <FileText className="w-3.5 h-3.5 opacity-60" />
                   </button>
                 </div>
               </>
@@ -273,7 +291,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           <button
             type="button"
             onClick={() => onEdit(decision)}
-            className="p-1.5 text-stone-400 hover:text-stone-700 rounded-md transition-colors cursor-pointer"
+            className="p-1.5 opacity-60 hover:opacity-100 rounded-md transition-colors cursor-pointer"
             title="تعديل القرار"
           >
             <Edit3 className="w-3.5 h-3.5" />
@@ -285,7 +303,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                 onDelete(decision.id);
               }
             }}
-            className="p-1.5 text-stone-400 hover:text-rose-600 rounded-md transition-colors cursor-pointer"
+            className="p-1.5 opacity-60 hover:text-rose-500 hover:opacity-100 rounded-md transition-colors cursor-pointer"
             title="حذف القرار"
           >
             <Trash2 className="w-3.5 h-3.5" />

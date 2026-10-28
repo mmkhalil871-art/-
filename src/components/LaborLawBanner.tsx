@@ -1,8 +1,9 @@
 import React from 'react';
-import { BookOpen, FileDown, Printer, Scale, RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react';
+import { BookOpen, FileDown, Printer, Scale, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { LaborLawInfo } from '../data/laborLawData';
 import { exportLaborLawAsWord } from '../utils/exportUtils';
 import { isCustomLawStored } from '../utils/lawStorage';
+import { useTheme } from '../context/ThemeContext';
 
 interface LaborLawBannerProps {
   currentLaw: LaborLawInfo;
@@ -15,24 +16,41 @@ export const LaborLawBanner: React.FC<LaborLawBannerProps> = ({
   onOpenLawModal,
   onOpenSyncModal,
 }) => {
+  const { activeAccent, activeTheme } = useTheme();
   const isCustom = isCustomLawStored();
-  const totalArticles = currentLaw.chapters.reduce((sum, ch) => sum + ch.articles.length, 0) + currentLaw.promulgationArticles.length;
+  const totalArticles =
+    currentLaw.chapters.reduce((sum, ch) => sum + ch.articles.length, 0) +
+    currentLaw.promulgationArticles.length;
 
   return (
-    <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 border border-stone-800 rounded-2xl p-5 sm:p-6 text-white shadow-md mb-6 no-print">
+    <div
+      className={`border rounded-2xl p-5 sm:p-6 shadow-md mb-6 no-print transition-colors duration-200 ${
+        activeTheme.isDark
+          ? 'bg-zinc-850 border-zinc-700 text-zinc-100'
+          : activeTheme.id === 'navy'
+          ? 'bg-slate-900 border-slate-800 text-white'
+          : activeTheme.id === 'emerald'
+          ? 'bg-[#052b21] border-[#0c4a3a] text-white'
+          : activeTheme.id === 'parchment'
+          ? 'bg-[#291e16] border-[#3d2f23] text-amber-50'
+          : 'bg-stone-900 border-stone-800 text-white'
+      }`}
+    >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
         {/* Info */}
         <div className="space-y-2 max-w-2xl">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-amber-400">
-            <Scale className="w-4 h-4" />
-            <span>التشريع الأساسي المعتمد · الجريدة الرسمية</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+            <Scale className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
+            <span style={{ color: activeAccent.colorHex }}>
+              التشريع الأساسي المعتمد · الجريدة الرسمية
+            </span>
             {isCustom ? (
               <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full text-[11px] flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3" />
                 <span>نسخة رسمية محدثة ومراجعة بواسطة المستخدم</span>
               </span>
             ) : (
-              <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full text-[11px]">
+              <span className="bg-white/10 text-white/90 border border-white/15 px-2 py-0.5 rounded-full text-[11px]">
                 متاح الاستبدال بالنص الرسمي الكامل
               </span>
             )}
@@ -40,12 +58,12 @@ export const LaborLawBanner: React.FC<LaborLawBannerProps> = ({
 
           <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2 flex-wrap">
             <span>{currentLaw.title}</span>
-            <span className="text-xs bg-stone-800 text-stone-300 px-2.5 py-0.5 rounded border border-stone-700 font-normal">
+            <span className="text-xs bg-black/30 text-white/90 px-2.5 py-0.5 rounded border border-white/10 font-normal">
               {currentLaw.chapters.length} أبواب · {totalArticles} مادة
             </span>
           </h2>
 
-          <p className="text-xs text-stone-300 leading-relaxed">
+          <p className="text-xs opacity-85 leading-relaxed">
             النص التشريعي لقانون العمل الصادر بالجريدة الرسمية ({currentLaw.gazetteIssue})، متاح للمطالعة والتحميل الفوري
             بصيغتي <strong>Word (.doc)</strong> و <strong>PDF</strong>، مع إمكانية استبدال النص وتحديث الروابط بالقرارات فورياً.
           </p>
@@ -56,7 +74,8 @@ export const LaborLawBanner: React.FC<LaborLawBannerProps> = ({
           <button
             type="button"
             onClick={onOpenLawModal}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold rounded-xl text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 font-bold rounded-xl text-xs sm:text-sm shadow-xs transition-transform active:scale-95 cursor-pointer text-white"
+            style={{ backgroundColor: activeAccent.colorHex }}
           >
             <BookOpen className="w-4 h-4" />
             <span>استعراض مواد القانون</span>
@@ -85,10 +104,10 @@ export const LaborLawBanner: React.FC<LaborLawBannerProps> = ({
           <button
             type="button"
             onClick={onOpenLawModal}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer border border-stone-700"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer border border-white/20"
             title="تحميل وطباعة نسخة PDF"
           >
-            <Printer className="w-4 h-4 text-amber-400" />
+            <Printer className="w-4 h-4 text-amber-300" />
             <span>PDF / طباعة</span>
           </button>
         </div>
@@ -96,4 +115,3 @@ export const LaborLawBanner: React.FC<LaborLawBannerProps> = ({
     </div>
   );
 };
-

@@ -1,8 +1,112 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --theme-header-bg: #1c1917;
+    --theme-body-bg: #f5f5f4;
+    --theme-card-bg: #ffffff;
+    --theme-card-border: #e7e5e4;
+    --theme-text-primary: #1c1917;
+    --theme-text-muted: #57534e;
+    --accent-color: #d97706;
+    --accent-hover: #b45309;
+    --accent-bg-soft: #fef3c7;
+    --accent-text: #92400e;
+  }
+
+  /* Dark Theme */
+  [data-theme="dark"] {
+    --theme-header-bg: #09090b;
+    --theme-body-bg: #121215;
+    --theme-card-bg: #1c1c21;
+    --theme-card-border: #2e2e38;
+    --theme-text-primary: #f4f4f5;
+    --theme-text-muted: #a1a1aa;
+    --accent-bg-soft: rgba(217, 119, 6, 0.15);
+    --accent-text: #fbbf24;
+    color-scheme: dark;
+  }
+
+  /* Diplomatic Navy Theme */
+  [data-theme="navy"] {
+    --theme-header-bg: #081325;
+    --theme-body-bg: #eff4f9;
+    --theme-card-bg: #ffffff;
+    --theme-card-border: #cbd5e1;
+    --theme-text-primary: #0f172a;
+    --theme-text-muted: #475569;
+  }
+
+  /* Egyptian Emerald Theme */
+  [data-theme="emerald"] {
+    --theme-header-bg: #052e23;
+    --theme-body-bg: #f0f7f3;
+    --theme-card-bg: #ffffff;
+    --theme-card-border: #a7f3d0;
+    --theme-text-primary: #06261c;
+    --theme-text-muted: #1e3a2f;
+  }
+
+  /* Traditional Legal Parchment Theme */
+  [data-theme="parchment"] {
+    --theme-header-bg: #271c14;
+    --theme-body-bg: #faf5eb;
+    --theme-card-bg: #fffdf9;
+    --theme-card-border: #e4d7c5;
+    --theme-text-primary: #281d14;
+    --theme-text-muted: #6e5845;
+  }
+
+  /* Accent Color Variants */
+  [data-accent="amber"] {
+    --accent-color: #d97706;
+    --accent-hover: #b45309;
+    --accent-bg-soft: #fef3c7;
+    --accent-text: #92400e;
+  }
+  [data-accent="blue"] {
+    --accent-color: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-bg-soft: #dbeafe;
+    --accent-text: #1e40af;
+  }
+  [data-accent="emerald"] {
+    --accent-color: #059669;
+    --accent-hover: #047857;
+    --accent-bg-soft: #d1fae5;
+    --accent-text: #065f46;
+  }
+  [data-accent="ruby"] {
+    --accent-color: #dc2626;
+    --accent-hover: #b91c1c;
+    --accent-bg-soft: #fee2e2;
+    --accent-text: #991b1b;
+  }
+  [data-accent="violet"] {
+    --accent-color: #7c3aed;
+    --accent-hover: #6d28d9;
+    --accent-bg-soft: #ede9fe;
+    --accent-text: #5b21b6;
+  }
+  [data-accent="teal"] {
+    --accent-color: #0d9488;
+    --accent-hover: #0f766e;
+    --accent-bg-soft: #ccfbf1;
+    --accent-text: #115e59;
+  }
+
+  /* Font Scale Adjustments */
+  [data-scale="comfortable"] {
+    font-size: 106%;
+  }
+
+  [data-scale="large"] {
+    font-size: 112%;
+  }
+
   body {
     font-family: 'Cairo', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 }
 

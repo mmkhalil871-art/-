@@ -8,7 +8,6 @@ import {
   saveDecisions,
   resetToSeedDecisions
 } from './utils/storage';
-import { downloadWindowsDesktopLauncher } from './utils/desktopAppLauncher';
 import { Header } from './components/Header';
 import { StatsBar } from './components/StatsBar';
 import { FilterBar } from './components/FilterBar';
@@ -23,21 +22,22 @@ import { PWAInstallModal } from './components/PWAInstallModal';
 import { LaborLawModal } from './components/LaborLawModal';
 import { LaborLawBanner } from './components/LaborLawBanner';
 import { LawUploadAndSyncModal } from './components/LawUploadAndSyncModal';
+import { ThemeSelectorModal } from './components/ThemeSelectorModal';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { LaborLawInfo } from './data/laborLawData';
 import { getStoredLaborLaw, saveStoredLaborLaw } from './utils/lawStorage';
 import {
   Scale,
   Plus,
-  BookOpen,
   FolderOpen,
   CheckCircle2,
-  AlertCircle,
-  MonitorDown,
-  RefreshCw,
-  WifiOff
+  WifiOff,
+  Palette
 } from 'lucide-react';
 
-export default function App() {
+function MainDashboard() {
+  const { activeTheme, activeAccent } = useTheme();
+
   const [decisions, setDecisions] = useState<MinisterialDecision[]>([]);
   const [currentLaw, setCurrentLaw] = useState<LaborLawInfo>(getStoredLaborLaw());
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,6 +61,7 @@ export default function App() {
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isLaborLawModalOpen, setIsLaborLawModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
   // Notification Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -248,11 +249,16 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100/70 text-stone-900 flex flex-col font-cairo">
+    <div
+      className={`min-h-screen ${activeTheme.bodyBgClass} ${activeTheme.textPrimaryClass} flex flex-col font-cairo transition-colors duration-200`}
+    >
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 left-6 z-50 bg-stone-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs sm:text-sm animate-fade-in border border-stone-700 no-print">
-          <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+          <CheckCircle2
+            className="w-4 h-4 shrink-0"
+            style={{ color: activeAccent.colorHex }}
+          />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -267,25 +273,40 @@ export default function App() {
         onOpenBackup={() => setIsBackupOpen(true)}
         onOpenLaborLaw={() => setIsLaborLawModalOpen(true)}
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
+        onOpenThemeSelector={() => setIsThemeModalOpen(true)}
         totalDecisionsCount={decisions.length}
         decisions={decisions}
         law={currentLaw}
       />
 
       {/* Hero Strip with Institutional Notice */}
-      <section className="bg-stone-900 text-stone-100 py-8 px-4 sm:px-6 lg:px-8 border-b border-stone-800 no-print">
+      <section
+        className={`py-8 px-4 sm:px-6 lg:px-8 border-b border-black/20 dark:border-white/10 no-print transition-colors duration-200 ${
+          activeTheme.isDark
+            ? 'bg-zinc-950 text-zinc-100'
+            : activeTheme.id === 'navy'
+            ? 'bg-slate-950 text-white'
+            : activeTheme.id === 'emerald'
+            ? 'bg-[#052e23] text-emerald-50'
+            : activeTheme.id === 'parchment'
+            ? 'bg-[#271c14] text-amber-50'
+            : 'bg-stone-900 text-stone-100'
+        }`}
+      >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-3xl">
-            <div className="text-xs font-semibold text-amber-400 flex items-center gap-2">
-              <Scale className="w-4 h-4" />
-              <span>المنظومة الرقمية للقرارات التنفيذية الرسمية</span>
+            <div className="text-xs font-semibold flex items-center gap-2">
+              <Scale className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
+              <span style={{ color: activeAccent.colorHex }}>
+                المنظومة الرقمية للقرارات التنفيذية الرسمية
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
               قاعدة القرارات واللوائح الوزارية المنفذة لقانون العمل رقم 14 لسنة 2025
             </h1>
-            <p className="text-xs sm:text-sm text-stone-300 leading-relaxed max-w-2xl">
+            <p className="text-xs sm:text-sm opacity-85 leading-relaxed max-w-2xl">
               مرجع قانوني رسمي متكامل يتيح للباحثين، المحامين، مديري الموارد البشرية، والشركات
-              استعراض نصوص القرارات الوزارية، طباعتها بالصيغة المعتمدة، وحفظها بصيغ متعددة
+              استعراض نصوص القرارات الوزارية، طباعتها بالصيغة المعتمدة، وتخصيص المظهر والألوان
               مع إمكانية تشغيل المنظومة كبرنامج كامل على جهاز الكمبيوتر دون الحاجة إلى اتصال بالإنترنت.
             </p>
           </div>
@@ -295,11 +316,23 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsInstallModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-stone-950 font-bold rounded-lg text-xs sm:text-sm shadow-md transition-all cursor-pointer hover:scale-[1.02]"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-white font-bold rounded-lg text-xs sm:text-sm shadow-md transition-all cursor-pointer hover:scale-[1.02]"
+              style={{ backgroundColor: activeAccent.colorHex }}
               title="خيارات تشغيل المنظومة كبرنامج حاسب آلي بدون إنترنت"
             >
-              <WifiOff className="w-4 h-4 text-stone-950" />
+              <WifiOff className="w-4 h-4" />
               <span>تشغيل كبرنامج بدون إنترنت</span>
+            </button>
+
+            {/* Appearance Customizer Shortcut */}
+            <button
+              type="button"
+              onClick={() => setIsThemeModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-white/10 hover:bg-white/15 text-white border border-white/20 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
+              title="تغيير المظهر ودرجات الألوان وحجم الخط"
+            >
+              <Palette className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
+              <span>المظهر والألوان</span>
             </button>
 
             <button
@@ -308,9 +341,9 @@ export default function App() {
                 setEditingDecision(null);
                 setIsFormOpen(true);
               }}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-stone-200 border border-white/10 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
             >
-              <Plus className="w-4 h-4 text-amber-400" />
+              <Plus className="w-4 h-4" />
               <span>إضافة قرار جديد</span>
             </button>
           </div>
@@ -349,21 +382,29 @@ export default function App() {
         />
 
         {filteredDecisions.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center max-w-md mx-auto my-8">
-            <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center mx-auto text-stone-400 mb-3">
+          <div
+            className={`rounded-2xl border p-12 text-center max-w-md mx-auto my-8 ${
+              activeTheme.isDark
+                ? 'bg-zinc-850 border-zinc-700'
+                : activeTheme.id === 'parchment'
+                ? 'bg-[#fffdf9] border-[#e4d7c5]'
+                : 'bg-white border-stone-200'
+            }`}
+          >
+            <div className="w-12 h-12 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center mx-auto opacity-50 mb-3">
               <FolderOpen className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-stone-900 mb-1">
+            <h3 className="text-base font-bold mb-1">
               لم يتم العثور على قرارات مطابقة
             </h3>
-            <p className="text-xs text-stone-500 mb-4 leading-relaxed">
+            <p className="text-xs opacity-75 mb-4 leading-relaxed">
               لا توجد قرارات وزارية تطابق خيارات البحث الحالية. يمكنك تعديل كلمات البحث أو تصفية الفلاتر.
             </p>
             <div className="flex items-center justify-center gap-2">
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                className="px-3.5 py-2 bg-black/5 dark:bg-white/10 hover:opacity-100 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
               >
                 مسح كل الفلاتر
               </button>
@@ -373,7 +414,8 @@ export default function App() {
                   setEditingDecision(null);
                   setIsFormOpen(true);
                 }}
-                className="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-stone-900 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                className="px-3.5 py-2 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                style={{ backgroundColor: activeAccent.colorHex }}
               >
                 إضافة قرار جديد الآن
               </button>
@@ -412,16 +454,37 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-stone-900 text-stone-400 border-t border-stone-800 py-8 px-4 sm:px-6 lg:px-8 text-xs no-print">
+      <footer
+        className={`border-t py-8 px-4 sm:px-6 lg:px-8 text-xs no-print transition-colors duration-200 ${
+          activeTheme.isDark
+            ? 'bg-zinc-950 text-zinc-400 border-zinc-850'
+            : activeTheme.id === 'navy'
+            ? 'bg-slate-950 text-slate-400 border-slate-900'
+            : activeTheme.id === 'emerald'
+            ? 'bg-[#04231b] text-emerald-200/70 border-[#073629]'
+            : activeTheme.id === 'parchment'
+            ? 'bg-[#20160f] text-amber-200/60 border-[#322318]'
+            : 'bg-stone-900 text-stone-400 border-stone-800'
+        }`}
+      >
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Scale className="w-4 h-4 text-amber-500" />
-            <span className="font-semibold text-stone-300">
+            <Scale className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
+            <span className="font-semibold text-white/90">
               قاعدة بيانات القرارات الوزارية المنفذة لقانون العمل رقم 14 لسنة 2025
             </span>
           </div>
-          <div className="text-stone-500 text-center sm:text-left">
-            نظام قانوني مؤسسي للتوثيق والاستعراض والطباعة الرسمية
+          <div className="opacity-75 text-center sm:text-left flex items-center gap-3">
+            <span>نظام قانوني مؤسسي للتوثيق والاستعراض والطباعة الرسمية</span>
+            <button
+              type="button"
+              onClick={() => setIsThemeModalOpen(true)}
+              className="hover:underline flex items-center gap-1 cursor-pointer"
+              style={{ color: activeAccent.colorHex }}
+            >
+              <Palette className="w-3.5 h-3.5" />
+              <span>تغيير المظهر</span>
+            </button>
           </div>
         </div>
       </footer>
@@ -507,6 +570,20 @@ export default function App() {
         decisions={decisions}
         onDecisionsUpdated={handleDecisionsUpdated}
       />
+
+      {/* Theme and Colors Customization Modal */}
+      <ThemeSelectorModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+      />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <MainDashboard />
+    </ThemeProvider>
   );
 }
