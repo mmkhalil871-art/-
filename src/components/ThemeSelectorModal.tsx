@@ -349,14 +349,14 @@ export const ThemeSelectorModal: React.FC<ThemeSelectorModalProps> = ({
                   </div>
                   <div>
                     <div className="text-xs font-bold">
-                      قرار وزير العمل رقم (14) لسنة 2025
+                      قانون العمل رقم 14 لسنة 2025
                     </div>
                     <div
                       className={`text-[11px] ${
                         activeTheme.isDark ? 'text-zinc-400' : 'text-stone-500'
                       }`}
                     >
-                      تنفيذاً لأحكام المواد (12، 13) من قانون العمل
+                      التشريع الأساسي والقرارات الوزارية المنفذة لأحكامه
                     </div>
                   </div>
                 </div>
