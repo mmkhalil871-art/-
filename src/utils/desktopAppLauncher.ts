@@ -80,11 +80,11 @@ Prop3=19,11
  */
 export function downloadPortableOfflineApp(
   decisions: MinisterialDecision[],
-  law?: LaborLawInfo
+  law?: LaborLawInfo | null
 ): void {
-  const activeLaw = law || getStoredLaborLaw();
+  const activeLaw = law !== undefined ? law : getStoredLaborLaw();
   const safeDecisionsJson = JSON.stringify(decisions).replace(/</g, '\\u003c');
-  const safeLawJson = JSON.stringify(activeLaw).replace(/</g, '\\u003c');
+  const safeLawJson = JSON.stringify(activeLaw || {}).replace(/</g, '\\u003c');
 
   const htmlContent = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">

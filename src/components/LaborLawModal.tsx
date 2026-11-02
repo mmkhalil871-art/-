@@ -32,14 +32,14 @@ import { isCustomLawStored } from '../utils/lawStorage';
 interface LaborLawModalProps {
   isOpen: boolean;
   onClose: () => void;
-  law?: LaborLawInfo;
+  law?: LaborLawInfo | null;
   onOpenSyncModal?: () => void;
 }
 
 export const LaborLawModal: React.FC<LaborLawModalProps> = ({
   isOpen,
   onClose,
-  law = LABOR_LAW_14_2025,
+  law,
   onOpenSyncModal,
 }) => {
   const [fontSize, setFontSize] = useState<number>(16);
@@ -103,6 +103,43 @@ export const LaborLawModal: React.FC<LaborLawModalProps> = ({
       setLoadingPdf(false);
     }
   };
+
+  if (!law) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-950/75 backdrop-blur-xs flex items-center justify-center p-4 no-print font-cairo">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 sm:p-8 text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center bg-amber-100 text-amber-800">
+            <Scale className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-bold text-stone-900">
+            قانون العمل: تم حذف النسخة السابقة
+          </h3>
+          <p className="text-xs text-stone-600 leading-relaxed">
+            تم تفريغ قانون العمل السابق بناءً على طلبك. يمكنك الآن رفع نسختك المعتمدة من قانون العمل (بصيغة Word أو PDF أو نص)، وسيقوم النظام فوراً بربط كافة القرارات الوزارية بنصوص مواده تلقائياً مع فتح المجال للتعديل اليدوي الكامل.
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenSyncModal?.();
+              }}
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer flex items-center gap-2"
+            >
+              <span>رفع ملف القانون والربط التلقائي 📤</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl cursor-pointer"
+            >
+              إغلاق
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-950/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6">

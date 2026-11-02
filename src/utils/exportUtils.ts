@@ -359,13 +359,15 @@ ${articlesText}
 ${decision.issuingAuthority}`;
 }
 
-import { LaborLawInfo } from '../data/laborLawData';
+import { LaborLawInfo, LABOR_LAW_14_2025 } from '../data/laborLawData';
+import { getStoredLaborLaw } from './lawStorage';
 
 /**
- * Exports full Labor Law No. 14 of 2025 as a formatted Microsoft Word (.doc) document
+ * Exports full Labor Law as a formatted Microsoft Word (.doc) document
  */
-export function exportLaborLawAsWord(law: LaborLawInfo): void {
-  const promulgationHtml = law.promulgationArticles
+export function exportLaborLawAsWord(rawLaw?: LaborLawInfo | null): void {
+  const law = rawLaw || getStoredLaborLaw() || LABOR_LAW_14_2025;
+  const promulgationHtml = (law.promulgationArticles || [])
     .map(
       (p) => `
       <div style="margin-bottom: 16px;">
@@ -488,14 +490,15 @@ export function exportLaborLawAsWord(law: LaborLawInfo): void {
 }
 
 /**
- * Exports full Labor Law No. 14 of 2025 as plain legal text (.txt)
+ * Exports full Labor Law as plain legal text (.txt)
  */
-export function exportLaborLawAsText(law: LaborLawInfo): void {
-  const promulgationText = law.promulgationArticles
+export function exportLaborLawAsText(rawLaw?: LaborLawInfo | null): void {
+  const law = rawLaw || getStoredLaborLaw() || LABOR_LAW_14_2025;
+  const promulgationText = (law.promulgationArticles || [])
     .map((p) => `${p.number}\n${p.text}`)
     .join('\n\n');
 
-  const chaptersText = law.chapters
+  const chaptersText = (law.chapters || [])
     .map((ch) => {
       const artText = ch.articles
         .map((a) => `${a.number} ${a.title ? `- ${a.title}` : ''}\n${a.text}`)

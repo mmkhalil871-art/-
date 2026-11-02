@@ -7,6 +7,65 @@ export interface DecisionArticle {
 
 export type DecisionStatus = 'نافذ' | 'سارٍ' | 'معدل' | 'ملغى';
 
+export type LegislationType =
+  | 'قرار وزاري'
+  | 'قرار رئيس مجلس الوزراء'
+  | 'لائحة تنفيذية'
+  | 'قانون / تعديل تشريعي'
+  | 'كتاب دوري'
+  | 'منشور رسمي'
+  | 'قرار إداري / تعليمات';
+
+export const LEGISLATION_TYPES: {
+  type: LegislationType;
+  label: string;
+  badgeClass: string;
+  defaultAuthority: string;
+}[] = [
+  {
+    type: 'قرار وزاري',
+    label: 'قرار وزاري',
+    badgeClass: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30',
+    defaultAuthority: 'وزير العمل',
+  },
+  {
+    type: 'قرار رئيس مجلس الوزراء',
+    label: 'قرار رئيس مجلس الوزراء',
+    badgeClass: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30',
+    defaultAuthority: 'رئيس مجلس الوزراء',
+  },
+  {
+    type: 'لائحة تنفيذية',
+    label: 'لائحة تنفيذية',
+    badgeClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+    defaultAuthority: 'وزير العمل',
+  },
+  {
+    type: 'قانون / تعديل تشريعي',
+    label: 'قانون / تعديل تشريعي',
+    badgeClass: 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30',
+    defaultAuthority: 'رئيس الجمهورية',
+  },
+  {
+    type: 'كتاب دوري',
+    label: 'كتاب دوري',
+    badgeClass: 'bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30',
+    defaultAuthority: 'وزارة العمل',
+  },
+  {
+    type: 'منشور رسمي',
+    label: 'منشور رسمي',
+    badgeClass: 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/30',
+    defaultAuthority: 'قطاع رعاية وحماية القوى العاملة',
+  },
+  {
+    type: 'قرار إداري / تعليمات',
+    label: 'قرار إداري / تعليمات',
+    badgeClass: 'bg-stone-500/15 text-stone-700 dark:text-stone-300 border-stone-500/30',
+    defaultAuthority: 'رئيس الإدارة المركزية المختصة',
+  },
+];
+
 export interface PdfAttachment {
   filename: string;
   size: number; // in bytes
@@ -17,6 +76,7 @@ export interface PdfAttachment {
 
 export interface MinisterialDecision {
   id: string;
+  legislationType?: LegislationType; // نوع التشريع (قرار وزاري، لائحة تنفيذية، كتاب دوري، إلخ)
   decisionNumber: string; // e.g. "1", "14"
   year: number; // e.g. 2025
   title: string;

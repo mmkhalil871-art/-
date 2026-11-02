@@ -15,7 +15,9 @@ import {
   MinisterialDecision,
   DecisionArticle,
   DecisionStatus,
-  PdfAttachment
+  PdfAttachment,
+  LegislationType,
+  LEGISLATION_TYPES
 } from '../types/decision';
 import { CATEGORIES } from '../data/seedDecisions';
 import { savePdfToStorage, formatFileSize } from '../utils/pdfStorage';
@@ -43,6 +45,7 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
   const isEditing = !!initialDecision;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [legislationType, setLegislationType] = useState<LegislationType>('قرار وزاري');
   const [decisionNumber, setDecisionNumber] = useState('');
   const [year, setYear] = useState<number>(2025);
   const [title, setTitle] = useState('');
@@ -90,6 +93,7 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
 
   useEffect(() => {
     if (initialDecision) {
+      setLegislationType(initialDecision.legislationType || 'قرار وزاري');
       setDecisionNumber(initialDecision.decisionNumber);
       setYear(initialDecision.year);
       setTitle(initialDecision.title);
@@ -123,6 +127,7 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
       setSelectedPdfFile(null);
     } else {
       // Reset form
+      setLegislationType('قرار وزاري');
       setDecisionNumber('');
       setYear(2025);
       setTitle('');
@@ -242,7 +247,63 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
     );
   };
 
+  const handleLegislationTypeChange = (newType: LegislationType) => {
+    setLegislationType(newType);
+    const typeDef = LEGISLATION_TYPES.find((t) => t.type === newType);
+    if (typeDef) {
+      // Auto-update authority if empty or matches another default authority
+      const otherDefaults = LEGISLATION_TYPES.map((t) => t.defaultAuthority);
+      if (!issuingAuthority.trim() || otherDefaults.includes(issuingAuthority)) {
+        setIssuingAuthority(typeDef.defaultAuthority);
+      }
+
+      // If preamble is default or empty, customize preamble based on type
+      if (
+        !preamble.trim() ||
+        preamble.includes('وزير العمل؛\nبعد الاطلاع على الدستور؛') ||
+        preamble.includes('رئيس مجلس الوزراء؛') ||
+        preamble.includes('كتاب دوري') ||
+        preamble.includes('منشور رسمي') ||
+        preamble.includes('باسم الشعب؛')
+      ) {
+        if (newType === 'قرار رئيس مجلس الوزراء') {
+          setPreamble(`رئيس مجلس الوزراء؛
+بعد الاطلاع على الدستور؛
+وعلى قانون العمل رقم 14 لسنة 2025؛
+وبناءً على ما عرضه وزير العمل؛
+قرر الآتي:`);
+        } else if (newType === 'لائحة تنفيذية') {
+          setPreamble(`وزير العمل؛
+بعد الاطلاع على الدستور؛
+وعلى قانون العمل رقم 14 لسنة 2025، وبصفة خاصة المواد المنظمة لإصدار اللائحة؛
+قرر إصدار اللائحة التنفيذية الآتية:`);
+        } else if (newType === 'كتاب دوري') {
+          setPreamble(`وزارة العمل - قطاع علاقات العمل ورعاية القوى العاملة؛
+كتاب دوري تنفيذي؛
+إلى كافة مديريات العمل بالمحافظات والمكاتب التابعة؛
+بشأن التوجيهات والتفسيرات التنفيذية لأحكام قانون العمل رقم 14 لسنة 2025؛
+يُراعى الالتزام بالتعليمات الآتية:`);
+        } else if (newType === 'منشور رسمي') {
+          setPreamble(`منشور رسمي إداري؛
+تنفيذاً للضوابط والتعليمات المنصوص عليها في قانون العمل رقم 14 لسنة 2025؛
+يُهاب بكافة المختصين والمنشآت المعنية الالتزام بالضوابط الآتية:`);
+        } else if (newType === 'قانون / تعديل تشريعي') {
+          setPreamble(`باسم الشعب؛
+رئيس الجمهورية؛
+قرر مجلس النواب القانون الآتي نصه، وقد أصدرناه:`);
+        } else if (newType === 'قرار إداري / تعليمات') {
+          setPreamble(`قرار إداري؛
+بناءً على الصلاحيات المقررة وتنفيذاً لأحكام قانون العمل رقم 14 لسنة 2025 ولائحته المنظمة؛
+تقرر الآتي:`);
+        } else {
+          setPreamble(DEFAULT_PREAMBLE_TEMPLATE);
+        }
+      }
+    }
+  };
+
   const handleFillSample = () => {
+    setLegislationType('قرار وزاري');
     setDecisionNumber('9');
     setYear(2025);
     setTitle('بشأن تنظيم ضوابط العمل عن بُعد (العمل المرن) وحماية بيانات العمال والمنشآت');
@@ -287,11 +348,11 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!decisionNumber.trim()) {
-      setError('يرجى إدخال رقم القرار الوزاري.');
+      setError('يرجى إدخال رقم التشريع أو القرار.');
       return;
     }
     if (!title.trim()) {
-      setError('يرجى إدخال عنوان وموضوع القرار.');
+      setError('يرجى إدخال عنوان وموضوع التشريع.');
       return;
     }
     if (articles.some((a) => !a.content.trim())) {
@@ -333,6 +394,7 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
 
       const finalDecision: MinisterialDecision = {
         id: decisionId,
+        legislationType,
         decisionNumber: decisionNumber.trim(),
         year: Number(year) || 2025,
         title: title.trim(),
@@ -365,7 +427,7 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
       onClose();
     } catch (err) {
       console.error('Error saving decision:', err);
-      setError('حدث خطأ أثناء حفظ القرار أو ملف الـ PDF. يرجى المحاولة ثانية.');
+      setError('حدث خطأ أثناء حفظ التشريع أو ملف الـ PDF. يرجى المحاولة ثانية.');
     } finally {
       setIsSaving(false);
     }
@@ -382,10 +444,10 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-white">
-                {isEditing ? 'تعديل القرار الوزاري' : 'إضافة قرار وزاري جديد'}
+                {isEditing ? 'تعديل التشريع' : 'إضافة تشريع جديد'}
               </h2>
               <p className="text-xs text-stone-400">
-                تنفيذاً لأحكام قانون العمل رقم 14 لسنة 2025 مع إمكانية إرفاق نسخة PDF
+                تنفيذاً لأحكام قانون العمل رقم 14 لسنة 2025 مع تحديد نوع التشريع وإرفاق نسخته الرسمية (PDF)
               </p>
             </div>
           </div>
@@ -421,14 +483,54 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
             </div>
           )}
 
+          {/* Section: Legislation Type Selector (نوع التشريع أثناء إضافته) */}
+          <div className="bg-amber-50/40 border border-amber-200/90 rounded-xl p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <label className="text-xs sm:text-sm font-bold text-stone-900 flex items-center gap-2">
+                <span>نوع التشريع والسند القانوني *</span>
+                <span className="text-[11px] font-normal text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full">
+                  المحدد حالياً: {legislationType}
+                </span>
+              </label>
+              <span className="text-[11px] text-stone-500">
+                اختر نوع الوثيقة لتكييف جهة الإصدار والديباجة تلقائياً
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 pt-1">
+              {LEGISLATION_TYPES.map((item) => {
+                const isSelected = legislationType === item.type;
+                return (
+                  <button
+                    key={item.type}
+                    type="button"
+                    onClick={() => handleLegislationTypeChange(item.type)}
+                    className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 text-xs ${
+                      isSelected
+                        ? 'bg-amber-500/20 border-amber-500 text-stone-950 font-bold shadow-xs ring-2 ring-amber-500/40'
+                        : 'bg-white border-stone-200 hover:border-amber-300 text-stone-700 hover:bg-stone-50 font-medium'
+                    }`}
+                  >
+                    <span className="leading-tight text-center">{item.label}</span>
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        isSelected ? 'bg-amber-600 scale-125' : 'bg-stone-300'
+                      }`}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Section: PDF Upload (Highlight Box) */}
-          <div className="bg-amber-50/50 border border-amber-200/90 rounded-xl p-4 space-y-3">
+          <div className="bg-stone-50 border border-stone-200 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileUp className="w-5 h-5 text-amber-700" />
                 <div>
                   <h3 className="text-xs sm:text-sm font-bold text-stone-900">
-                    رفع نسخة القرار الرسمية بصيغة PDF
+                    رفع النسخة الرسمية للتشريع بصيغة PDF
                   </h3>
                   <p className="text-[11px] text-stone-500">
                     يمكنك إرفاق النسخة الموقعة أو المنشورة بالجريدة الرسمية لاستعراضها وطباعتها مباشرة
@@ -489,7 +591,7 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-stone-700 mb-1">
-                رقم القرار الوزاري *
+                رقم التشريع *
               </label>
               <input
                 type="text"
@@ -533,7 +635,7 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
           {/* Title */}
           <div>
             <label className="block text-xs font-semibold text-stone-700 mb-1">
-              عنوان وموضوع القرار الوزاري *
+              عنوان وموضوع التشريع *
             </label>
             <input
               type="text"
@@ -834,8 +936,8 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
                 {isSaving
                   ? 'جارٍ الحفظ...'
                   : isEditing
-                  ? 'حفظ التعديلات'
-                  : 'إضافة القرار للقاعدة'}
+                  ? 'حفظ التعديلات على التشريع'
+                  : 'حفظ وإدراج التشريع في المنظومة 🚀'}
               </span>
             </button>
           </div>

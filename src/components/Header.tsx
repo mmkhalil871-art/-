@@ -1,9 +1,10 @@
 import React from 'react';
-import { Plus, Scale, BookOpen, Download, FileDown, Palette, FolderOpen } from 'lucide-react';
+import { Plus, Scale, BookOpen, Download, FileDown, Palette, FolderOpen, ShieldCheck } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 import { MinisterialDecision } from '../types/decision';
 import { LaborLawInfo } from '../data/laborLawData';
 import { useTheme } from '../context/ThemeContext';
+import { useUserAccess } from '../context/UserAccessContext';
 
 interface HeaderProps {
   onAddNew: () => void;
@@ -13,9 +14,10 @@ interface HeaderProps {
   onOpenSyncModal?: () => void;
   onOpenThemeSelector: () => void;
   onOpenDocumentLibrary: () => void;
+  onOpenUserAccessModal: () => void;
   totalDecisionsCount: number;
   decisions?: MinisterialDecision[];
-  law?: LaborLawInfo;
+  law?: LaborLawInfo | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -26,139 +28,141 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSyncModal,
   onOpenThemeSelector,
   onOpenDocumentLibrary,
+  onOpenUserAccessModal,
   totalDecisionsCount,
   decisions = [],
   law,
 }) => {
   const { activeTheme, activeAccent } = useTheme();
+  const { currentUser } = useUserAccess();
+  const lawTitle = law ? (law.lawNumberTitle || `قانون العمل رقم ${law.lawNumber} لسنة ${law.year}`) : '';
 
   return (
     <header
-      className={`sticky top-0 z-30 ${activeTheme.headerBgClass} ${activeTheme.headerTextClass} border-b border-black/20 dark:border-white/10 shadow-sm no-print transition-colors duration-200`}
+      className={`sticky top-0 z-30 ${activeTheme.headerBgClass} ${activeTheme.headerTextClass} border-b border-black/10 dark:border-white/10 backdrop-blur-md shadow-xs no-print transition-colors duration-200`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-4 lg:gap-6 h-16">
-          {/* Zone 1: Brand Wordmark */}
+        <div className="flex items-center justify-between gap-3 h-16">
+          {/* Brand Identity */}
           <div className="flex items-center gap-3 shrink-0">
             <div
-              className="w-9 h-9 rounded-lg border flex items-center justify-center transition-colors"
+              className="w-9 h-9 rounded-xl border flex items-center justify-center shadow-xs transition-transform hover:scale-105"
               style={{
-                backgroundColor: `${activeAccent.colorHex}20`,
-                borderColor: `${activeAccent.colorHex}40`,
+                backgroundColor: `${activeAccent.colorHex}25`,
+                borderColor: `${activeAccent.colorHex}50`,
                 color: activeAccent.colorHex,
               }}
             >
               <Scale className="w-5 h-5" />
             </div>
-            <a
-              href="/"
-              className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-white whitespace-nowrap hover:opacity-90 transition-opacity"
-            >
-              قاعدة القرارات الوزارية · قانون العمل 14 لسنة 2025
+            <a href="/" className="flex flex-col text-right group">
+              <span className="text-sm sm:text-base font-extrabold tracking-tight text-white group-hover:opacity-90 transition-opacity">
+                المنظومة الوطنية للتشريعات
+              </span>
+              <span className="text-[11px] opacity-70 font-sans -mt-0.5 hidden sm:inline">
+                {law ? lawTitle : 'القرارات واللوائح الوزارية'}
+              </span>
             </a>
           </div>
 
-          {/* Zone 2: Concise Nav Links */}
-          <nav className="hidden lg:flex items-center gap-4 text-sm font-medium opacity-90">
-            {/* Smart Document Library Ingest Link */}
-            <button
-              type="button"
-              onClick={onOpenDocumentLibrary}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer border border-emerald-400/40 bg-emerald-950/60 text-emerald-300 hover:bg-emerald-900/60 hover:text-emerald-200"
-              title="رفع مستندات القرارات الوزارية وتنظيمها آلياً في المكتبة"
+          {/* Navigation Links */}
+          <nav className="hidden lg:flex items-center gap-1.5 text-xs font-semibold">
+            <a
+              href="#decisions-catalog"
+              className="px-3 py-1.5 rounded-lg hover:bg-white/10 text-white/90 hover:text-white transition-colors"
             >
-              <FolderOpen className="w-4 h-4 text-emerald-400" />
-              <span>مكتبة الوثائق والرفع الذكي 📁</span>
-            </button>
+              دليل التشريعات ({totalDecisionsCount})
+            </a>
 
-            <button
-              type="button"
-              onClick={onOpenLaborLaw}
-              className="flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer font-bold hover:underline"
-              style={{ color: activeAccent.colorHex }}
-            >
-              <FileDown className="w-4 h-4 text-sky-400" />
-              <span>قانون العمل 14 (Word + PDF)</span>
-            </button>
-
-            {onOpenSyncModal && (
+            {law ? (
               <button
                 type="button"
-                onClick={onOpenSyncModal}
-                className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors whitespace-nowrap shrink-0 cursor-pointer text-xs bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-1 rounded-md"
-                title="تحديث واستبدال نص القانون ومراجعة الروابط"
+                onClick={onOpenLaborLaw}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/10 text-sky-300 hover:text-sky-200 transition-colors cursor-pointer"
+                title="عرض نص قانون العمل (Word + PDF)"
               >
-                <span>تحديث نص القانون 🔄</span>
+                <FileDown className="w-3.5 h-3.5" />
+                <span>قانون العمل</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onOpenSyncModal || onOpenLaborLaw}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 transition-colors cursor-pointer"
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                <span>رفع نص القانون</span>
               </button>
             )}
 
-            <a
-              href="#decisions-catalog"
-              className="hover:text-white transition-colors whitespace-nowrap shrink-0"
-            >
-              دليل القرارات ({totalDecisionsCount})
-            </a>
             <button
               type="button"
               onClick={onOpenLawGuide}
-              className="flex items-center gap-1.5 hover:text-white transition-colors whitespace-nowrap shrink-0 cursor-pointer hover:underline"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/10 text-white/90 hover:text-white transition-colors cursor-pointer"
             >
-              <BookOpen className="w-4 h-4 text-amber-400" />
+              <BookOpen className="w-3.5 h-3.5 opacity-70" />
               <span>أبواب القانون</span>
             </button>
+
             <button
               type="button"
               onClick={onOpenBackup}
-              className="flex items-center gap-1.5 hover:text-white transition-colors whitespace-nowrap shrink-0 cursor-pointer hover:underline"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+              title="النسخ الاحتياطي وتصدير البيانات"
             >
-              <Download className="w-4 h-4 text-amber-400" />
+              <Download className="w-3.5 h-3.5 opacity-70" />
               <span>النسخ الاحتياطي</span>
             </button>
           </nav>
 
-          {/* Zone 3: Theme, Library, Install & Add Actions */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            {/* Quick Mobile/Tablet Library button */}
+          {/* Action Tools Cluster */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Smart Document Library Shortcut */}
             <button
               type="button"
               onClick={onOpenDocumentLibrary}
-              className="lg:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/60 text-emerald-300 text-xs font-semibold"
-              title="مكتبة الوثائق والرفع الذكي"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
+              title="مكتبة المستندات والرفع الذكي"
             >
-              <FolderOpen className="w-4 h-4 text-emerald-400" />
-              <span className="hidden sm:inline">المكتبة</span>
+              <FolderOpen className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden md:inline">المكتبة الذكية</span>
             </button>
 
-            {/* Theme & Appearance Switcher */}
+            {/* User Permissions Button */}
+            <button
+              type="button"
+              onClick={onOpenUserAccessModal}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-500/40 bg-amber-950/60 hover:bg-amber-900/70 text-amber-300 text-xs font-bold transition-colors cursor-pointer shadow-xs"
+              title={`المستخدم الحالي: ${currentUser.name} (كامل الصلاحيات)`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden xl:inline">الصلاحيات</span>
+            </button>
+
+            {/* Theme Selector */}
             <button
               type="button"
               onClick={onOpenThemeSelector}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-white/15 hover:border-white/30 bg-white/5 hover:bg-white/10 text-xs font-semibold text-white transition-colors cursor-pointer"
-              title="تغيير المظهر ودرجات الألوان وحجم الخط"
+              className="p-2 rounded-lg border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-white/90 hover:text-white transition-colors cursor-pointer"
+              title="تخصيص المظهر ودرجات الألوان"
             >
               <Palette className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
-              <span className="hidden md:inline">المظهر والألوان</span>
-              <span
-                className="w-2 h-2 rounded-full inline-block"
-                style={{ backgroundColor: activeAccent.colorHex }}
-              />
             </button>
 
-            {/* Install PWA Button on PC / Mobile */}
+            {/* Install PWA */}
             <PWAInstallButton decisions={decisions} law={law} />
 
-            {/* Primary Action: Add Decision */}
+            {/* Primary Action Button: Add Legislation */}
             <button
               type="button"
               onClick={onAddNew}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition-transform active:scale-95 whitespace-nowrap shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-bold text-white rounded-xl shadow-md transition-all hover:brightness-110 active:scale-95 whitespace-nowrap cursor-pointer"
               style={{
                 backgroundColor: activeAccent.colorHex,
-                color: '#ffffff',
               }}
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>إضافة قرار جديد</span>
+              <span>إضافة تشريع</span>
             </button>
           </div>
         </div>

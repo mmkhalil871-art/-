@@ -43,7 +43,7 @@ interface DocumentLibraryModalProps {
   onClose: () => void;
   decisions: MinisterialDecision[];
   onDecisionsUpdated: (newDecisions: MinisterialDecision[]) => void;
-  law: LaborLawInfo;
+  law?: LaborLawInfo | null;
   onViewDecision: (decision: MinisterialDecision, initialTab?: 'scanned_pdf' | 'written_text' | 'summary') => void;
 }
 
@@ -730,16 +730,25 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
           </div>
         )}
 
-        {/* Tab 3: Coverage of Labor Law 14/2025 */}
+        {/* Tab 3: Coverage of Labor Law */}
         {activeTab === 'coverage' && (
           <div className="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
             <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 leading-relaxed">
-              <strong>خريطة تغطية وتوثيق مواد قانون العمل 14 لسنة 2025:</strong> يوضح هذا التقرير الأبواب والموضوعات
+              <strong>خريطة تغطية وتوثيق مواد قانون العمل:</strong> يوضح هذا التقرير الأبواب والموضوعات
               التشريعية التي تم تنظيم وثائق وقرارات وزارية لها في المكتبة مع بيان حالة النسخ الرسمية الممسوحة (PDF) والنسخ المكتوبة (Word).
             </div>
 
-            <div className="space-y-4">
-              {law.chapters.map((chapter) => {
+            {!law || !law.chapters || law.chapters.length === 0 ? (
+              <div className="p-8 text-center border-2 border-dashed rounded-xl border-amber-400/40 bg-amber-500/5 space-y-2">
+                <BookOpen className="w-8 h-8 text-amber-500 mx-auto" />
+                <div className="text-sm font-bold">بانتظار رفع نص قانون العمل</div>
+                <div className="text-xs opacity-75">
+                  تم حذف قانون العمل السابق. عند رفعك لنسخة القانون، سيتم إنشاء خريطة الربط والتغطية التشريعية تلقائياً.
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {law.chapters.map((chapter) => {
                 const chapterDecisions = decisions.filter((d) =>
                   chapter.articles.some((art) => d.relatedLawArticles.includes(art.number))
                 );
@@ -807,6 +816,7 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
                 );
               })}
             </div>
+            )}
           </div>
         )}
 

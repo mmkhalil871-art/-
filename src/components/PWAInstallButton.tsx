@@ -9,7 +9,7 @@ interface PWAInstallButtonProps {
   className?: string;
   variant?: 'header' | 'banner' | 'card';
   decisions?: MinisterialDecision[];
-  law?: LaborLawInfo;
+  law?: LaborLawInfo | null;
 }
 
 export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({

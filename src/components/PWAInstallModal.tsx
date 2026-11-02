@@ -28,7 +28,7 @@ interface PWAInstallModalProps {
   isOpen: boolean;
   onClose: () => void;
   decisions?: MinisterialDecision[];
-  law?: LaborLawInfo;
+  law?: LaborLawInfo | null;
 }
 
 export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({

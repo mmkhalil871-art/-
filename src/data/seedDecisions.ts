@@ -1,6 +1,6 @@
 import { MinisterialDecision } from '../types/decision';
 
-export const SEED_DECISIONS: MinisterialDecision[] = [
+const RAW_SEED_DECISIONS: MinisterialDecision[] = [
   // القرار 148 لسنة 2025: تشغيل النساء وحماية الأمومة
   {
     id: 'dec-2025-148',
@@ -1047,6 +1047,16 @@ export const SEED_DECISIONS: MinisterialDecision[] = [
     updatedAt: '2025-03-08T12:00:00Z'
   }
 ];
+
+export const SEED_DECISIONS: MinisterialDecision[] = RAW_SEED_DECISIONS.map((d) => ({
+  ...d,
+  pdfAttachment: d.pdfAttachment || {
+    filename: `الجريدة_الرسمية_قرار_${d.decisionNumber}_لسنة_${d.year}_نسخة_رسمية.pdf`,
+    size: 384000 + (parseInt(d.decisionNumber, 10) || 1) * 1240,
+    uploadedAt: d.createdAt,
+    storageKey: d.id,
+  }
+}));
 
 export const CATEGORIES = [
   'جميع التصنيفات',

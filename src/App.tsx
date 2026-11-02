@@ -25,23 +25,28 @@ import { LaborLawBanner } from './components/LaborLawBanner';
 import { LawUploadAndSyncModal } from './components/LawUploadAndSyncModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { DocumentLibraryModal } from './components/DocumentLibraryModal';
+import { UserAccessModal } from './components/UserAccessModal';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { UserAccessProvider, useUserAccess } from './context/UserAccessContext';
 import { LaborLawInfo } from './data/laborLawData';
-import { getStoredLaborLaw, saveStoredLaborLaw } from './utils/lawStorage';
+import { getStoredLaborLaw, saveStoredLaborLaw, deleteStoredLaborLaw } from './utils/lawStorage';
 import {
   Scale,
   Plus,
   FolderOpen,
   CheckCircle2,
   WifiOff,
-  Palette
+  Palette,
+  ShieldCheck,
+  Shield
 } from 'lucide-react';
 
 function MainDashboard() {
   const { activeTheme, activeAccent } = useTheme();
+  const { currentUser, isSuperAdmin, canEditTexts, canAddDocuments, canDelete, canManageUsers } = useUserAccess();
 
   const [decisions, setDecisions] = useState<MinisterialDecision[]>([]);
-  const [currentLaw, setCurrentLaw] = useState<LaborLawInfo>(getStoredLaborLaw());
+  const [currentLaw, setCurrentLaw] = useState<LaborLawInfo | null>(getStoredLaborLaw());
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('جميع التصنيفات');
   const [selectedStatus, setSelectedStatus] = useState('الكل');
@@ -65,6 +70,7 @@ function MainDashboard() {
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [isDocumentLibraryOpen, setIsDocumentLibraryOpen] = useState(false);
+  const [isUserAccessModalOpen, setIsUserAccessModalOpen] = useState(false);
 
   // Notification Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -237,7 +243,13 @@ function MainDashboard() {
   const handleLawUpdated = (newLaw: LaborLawInfo) => {
     setCurrentLaw(newLaw);
     saveStoredLaborLaw(newLaw);
-    showToast('تم استبدال نص قانون العمل رقم 14 وتحديثه في التطبيق بنجاح.');
+    showToast('تم استبدال نص قانون العمل وتحديثه في التطبيق بنجاح.');
+  };
+
+  const handleDeleteLaw = () => {
+    deleteStoredLaborLaw();
+    setCurrentLaw(null);
+    showToast('تم حذف قانون العمل بنجاح. بانتظار رفع نسختك المعتمدة.');
   };
 
   const handleDecisionsUpdated = (updatedList: MinisterialDecision[]) => {
@@ -288,14 +300,16 @@ function MainDashboard() {
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
         onOpenThemeSelector={() => setIsThemeModalOpen(true)}
         onOpenDocumentLibrary={() => setIsDocumentLibraryOpen(true)}
+        onOpenUserAccessModal={() => setIsUserAccessModalOpen(true)}
         totalDecisionsCount={decisions.length}
         decisions={decisions}
         law={currentLaw}
       />
 
       {/* Hero Strip with Institutional Notice */}
+      {/* Executive Hero Section */}
       <section
-        className={`py-8 px-4 sm:px-6 lg:px-8 border-b border-black/20 dark:border-white/10 no-print transition-colors duration-200 ${
+        className={`py-8 px-4 sm:px-6 lg:px-8 border-b border-black/15 dark:border-white/10 no-print transition-colors duration-200 ${
           activeTheme.isDark
             ? 'bg-zinc-950 text-zinc-100'
             : activeTheme.id === 'navy'
@@ -307,99 +321,113 @@ function MainDashboard() {
             : 'bg-stone-900 text-stone-100'
         }`}
       >
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-3xl">
-            <div className="text-xs font-semibold flex items-center gap-2">
-              <Scale className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
-              <span style={{ color: activeAccent.colorHex }}>
-                المنظومة الرقمية للقرارات التنفيذية الرسمية
-              </span>
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-2.5 max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-xs border border-white/15">
+              <Scale className="w-3.5 h-3.5" style={{ color: activeAccent.colorHex }} />
+              <span className="text-white/90">جمهورية مصر العربية · المنظومة التشريعية الرسمية</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
-              قاعدة القرارات واللوائح الوزارية المنفذة لقانون العمل رقم 14 لسنة 2025
+              قاعدة القرارات واللوائح المنفذة لقانون العمل
             </h1>
-            <p className="text-xs sm:text-sm opacity-85 leading-relaxed max-w-2xl">
-              مرجع قانوني رسمي متكامل يتيح للباحثين، المحامين، مديري الموارد البشرية، والشركات
-              استعراض نصوص القرارات الوزارية الموثقة بنسخ رسمية (PDF)، وطباعتها وتخصيص المظهر،
-              مع إمكانية رفع كافة المستندات ليقوم النظام بتنظيمها في المكتبة آلياً نيابة عنك.
+            <p className="text-xs sm:text-sm text-white/80 leading-relaxed max-w-2xl">
+              مرجع قانوني رقمي موثق بالنسخ الممسوحة ضوئياً (PDF) والنصوص المكتوبة (Word) لتيسير
+              النقل والاقتباس وصياغة المذكرات، مع إمكانية رفع المستندات وتنظيمها آلياً.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 flex-wrap">
-            {/* Smart Document Library & Ingestion Button */}
-            <button
-              type="button"
-              onClick={() => setIsDocumentLibraryOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-4.5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs sm:text-sm shadow-md transition-all cursor-pointer hover:scale-[1.02] border border-emerald-400/40"
-              title="رفع كافة المستندات المتعلقة بالقرارات الوزارية وسيقوم النظام بتنظيمها نيابة عنك"
-            >
-              <FolderOpen className="w-4 h-4 text-emerald-200" />
-              <span>مكتبة الوثائق والرفع الذكي 📁</span>
-            </button>
-
-            {/* Primary Action: Run as Program Without Internet */}
-            <button
-              type="button"
-              onClick={() => setIsInstallModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-white font-bold rounded-lg text-xs sm:text-sm shadow-md transition-all cursor-pointer hover:scale-[1.02]"
-              style={{ backgroundColor: activeAccent.colorHex }}
-              title="خيارات تشغيل المنظومة كبرنامج حاسب آلي بدون إنترنت"
-            >
-              <WifiOff className="w-4 h-4" />
-              <span>تشغيل بدون إنترنت</span>
-            </button>
-
-            {/* Appearance Customizer Shortcut */}
-            <button
-              type="button"
-              onClick={() => setIsThemeModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/10 hover:bg-white/15 text-white border border-white/20 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
-              title="تغيير المظهر ودرجات الألوان وحجم الخط"
-            >
-              <Palette className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
-              <span className="hidden sm:inline">المظهر</span>
-            </button>
-
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+            {/* Primary Add Legislation */}
             <button
               type="button"
               onClick={() => {
                 setEditingDecision(null);
                 setIsFormOpen(true);
               }}
-              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-white/5 hover:bg-white/10 text-stone-200 border border-white/10 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4.5 py-2.5 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] cursor-pointer"
+              style={{ backgroundColor: activeAccent.colorHex }}
             >
-              <Plus className="w-4 h-4" />
-              <span>إضافة قرار</span>
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>إضافة تشريع جديد</span>
+            </button>
+
+            {/* Smart Document Library & Ingestion Button */}
+            <button
+              type="button"
+              onClick={() => setIsDocumentLibraryOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] cursor-pointer border border-emerald-400/30"
+              title="رفع مستندات القرارات وتنظيمها نيابة عنك"
+            >
+              <FolderOpen className="w-4 h-4 text-emerald-200" />
+              <span>مكتبة الوثائق الذكية</span>
+            </button>
+
+            {/* Offline Launcher */}
+            <button
+              type="button"
+              onClick={() => setIsInstallModalOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-white/10 hover:bg-white/15 text-white/90 hover:text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer border border-white/15"
+              title="خيارات تشغيل المنظومة كبرنامج حاسب آلي بدون إنترنت"
+            >
+              <WifiOff className="w-4 h-4" />
+              <span>بدون إنترنت</span>
+            </button>
+
+            {/* Theme Shortcut */}
+            <button
+              type="button"
+              onClick={() => setIsThemeModalOpen(true)}
+              className="p-2.5 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs transition-colors cursor-pointer border border-white/15"
+              title="تخصيص المظهر ودرجات الألوان"
+            >
+              <Palette className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
             </button>
           </div>
         </div>
       </section>
 
-      {/* Stats Bar */}
+      {/* Modern Stats Ribbon */}
       <StatsBar decisions={decisions} />
 
-      {/* Quick Ingestion Callout Strip */}
+      {/* Unified Executive System Status Ribbon (Minimalist & Clean) */}
       <div
-        className={`border-b px-4 sm:px-6 lg:px-8 py-2.5 text-xs no-print transition-colors ${
+        className={`border-b px-4 sm:px-6 lg:px-8 py-2 text-xs no-print transition-colors ${
           activeTheme.isDark
-            ? 'bg-emerald-950/40 border-emerald-900/50 text-emerald-300'
-            : 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
+            ? 'bg-zinc-900/70 border-zinc-800 text-zinc-300'
+            : activeTheme.id === 'parchment'
+            ? 'bg-[#f4efe4] border-[#e2d7c5] text-[#3d2f23]'
+            : 'bg-stone-100/90 border-stone-200/90 text-stone-700'
         }`}
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+          {/* Admin User Status */}
           <div className="flex items-center gap-2">
-            <FolderOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
             <span>
-              <strong>قاعدة التوثيق الرسمي:</strong> تم حصر المكتبة على القرارات التي تملك نسخة رسمية ممسوحة (PDF). يمكنك رفع مستنداتك دفعة واحدة وسيقوم النظام بتنظيمها وإدراجها فورياً.
+              <strong>المسؤول ({currentUser.name}):</strong> كامل الصلاحيات مفعلة (تحرير النصوص، رفع وتعديل المستندات، الحذف، والتحكم في الدخول)
             </span>
+            <button
+              type="button"
+              onClick={() => setIsUserAccessModalOpen(true)}
+              className="font-bold underline text-amber-600 dark:text-amber-400 hover:opacity-80 cursor-pointer mr-1"
+            >
+              إدارة الصلاحيات
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsDocumentLibraryOpen(true)}
-            className="font-bold underline hover:opacity-80 cursor-pointer whitespace-nowrap text-emerald-700 dark:text-emerald-300"
-          >
-            فتح مكتبة المستندات والرفع الآن ←
-          </button>
+
+          {/* Document Ingestion & Integrity Status */}
+          <div className="flex items-center gap-2 text-stone-600 dark:text-stone-400">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <span>كافة التشريعات موثقة بنسخ رسمية (PDF + Word)</span>
+            <button
+              type="button"
+              onClick={() => setIsDocumentLibraryOpen(true)}
+              className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+            >
+              <FolderOpen className="w-3.5 h-3.5" />
+              <span>رفع المزيد وتنظيم المكتبة</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -431,6 +459,7 @@ function MainDashboard() {
           currentLaw={currentLaw}
           onOpenLawModal={() => setIsLaborLawModalOpen(true)}
           onOpenSyncModal={() => setIsSyncModalOpen(true)}
+          onDeleteLaw={handleDeleteLaw}
         />
 
         {filteredDecisions.length === 0 ? (
@@ -470,7 +499,7 @@ function MainDashboard() {
                 }}
                 className="px-4 py-2.5 bg-black/5 dark:bg-white/10 hover:opacity-100 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
               >
-                + إضافة قرار جديد مع إرفاق PDF
+                + إضافة تشريع جديد مع إرفاق PDF
               </button>
             </div>
           </div>
@@ -486,6 +515,7 @@ function MainDashboard() {
                   setEditingDecision(d);
                   setIsFormOpen(true);
                 }}
+                onUpdateDecision={handleSaveDecision}
                 onDelete={handleDeleteDecision}
                 onToggleFavorite={handleToggleFavorite}
               />
@@ -500,6 +530,7 @@ function MainDashboard() {
               setEditingDecision(d);
               setIsFormOpen(true);
             }}
+            onUpdateDecision={handleSaveDecision}
             onDelete={handleDeleteDecision}
             onToggleFavorite={handleToggleFavorite}
           />
@@ -561,6 +592,7 @@ function MainDashboard() {
             setEditingDecision(d);
             setIsFormOpen(true);
           }}
+          onDelete={handleDeleteDecision}
           onToggleFavorite={handleToggleFavorite}
           onSelectLawArticle={(art) => {
             setActiveViewingDecision(null);
@@ -614,7 +646,7 @@ function MainDashboard() {
         law={currentLaw}
       />
 
-      {/* Labor Law 14 of 2025 Full View & Word/PDF Modal */}
+      {/* Labor Law Full View & Word/PDF Modal */}
       <LaborLawModal
         isOpen={isLaborLawModalOpen}
         onClose={() => setIsLaborLawModalOpen(false)}
@@ -647,6 +679,13 @@ function MainDashboard() {
         law={currentLaw}
         onViewDecision={handleViewDecision}
       />
+
+      {/* User Access & Full RBAC Permissions Control Modal */}
+      <UserAccessModal
+        isOpen={isUserAccessModalOpen}
+        onClose={() => setIsUserAccessModalOpen(false)}
+        onShowToast={showToast}
+      />
     </div>
   );
 }
@@ -654,7 +693,9 @@ function MainDashboard() {
 export default function App() {
   return (
     <ThemeProvider>
-      <MainDashboard />
+      <UserAccessProvider>
+        <MainDashboard />
+      </UserAccessProvider>
     </ThemeProvider>
   );
 }
