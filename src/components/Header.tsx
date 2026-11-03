@@ -56,7 +56,8 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header
-      className={`sticky top-0 z-30 ${activeTheme.headerBgClass} ${activeTheme.headerTextClass} border-b border-black/10 dark:border-white/10 backdrop-blur-md shadow-xs no-print transition-colors duration-200`}
+      className={`sticky top-0 z-30 ${activeTheme.headerTextClass} border-b border-black/10 dark:border-white/10 backdrop-blur-md shadow-xs no-print transition-colors duration-200`}
+      style={{ backgroundColor: 'var(--theme-header-bg)' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-3 h-16">
@@ -160,24 +161,12 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onOpenThemeSelector}
-              className="p-2 rounded-lg border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-white/90 hover:text-white transition-colors cursor-pointer"
-              title="تخصيص المظهر ودرجات الألوان"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all cursor-pointer shadow-xs hover:scale-105"
+              title="تغيير ألوان المظهر والوضع الليلي (10 طرازات)"
             >
               <Palette className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
+              <span className="hidden sm:inline">ألوان المظهر</span>
             </button>
-
-            {/* Android APK Hub Shortcut */}
-            {onOpenApkModal && (
-              <button
-                type="button"
-                onClick={onOpenApkModal}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-sky-500/40 bg-sky-950/60 hover:bg-sky-900/70 text-sky-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
-                title="تطبيق الهاتف المحمول وتوليد حزمة APK للأندرويد"
-              >
-                <Smartphone className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
-                <span className="hidden sm:inline font-bold">تطبيق APK</span>
-              </button>
-            )}
 
             {/* Device Mode Switcher (Mobile Streamlined vs Desktop Workspace) */}
             {onToggleDeviceMode && (
@@ -207,19 +196,6 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Install PWA */}
             <PWAInstallButton decisions={decisions} law={law} />
-
-            {/* Primary Action Button: Add Legislation */}
-            <button
-              type="button"
-              onClick={onAddNew}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-bold text-white rounded-xl shadow-md transition-all hover:brightness-110 active:scale-95 whitespace-nowrap cursor-pointer"
-              style={{
-                backgroundColor: activeAccent.colorHex,
-              }}
-            >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>إضافة تشريع</span>
-            </button>
           </div>
         </div>
       </div>

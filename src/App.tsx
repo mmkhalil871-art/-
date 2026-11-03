@@ -319,17 +319,16 @@ function MainDashboard() {
       {/* Hero Strip with Institutional Notice */}
       {/* Executive Hero Section */}
       <section
-        className={`py-8 px-4 sm:px-6 lg:px-8 border-b border-black/15 dark:border-white/10 no-print transition-colors duration-200 ${
-          activeTheme.isDark
-            ? 'bg-zinc-950 text-zinc-100'
-            : activeTheme.id === 'navy'
-            ? 'bg-slate-950 text-white'
-            : activeTheme.id === 'emerald'
-            ? 'bg-[#052e23] text-emerald-50'
-            : activeTheme.id === 'parchment'
-            ? 'bg-[#271c14] text-amber-50'
-            : 'bg-stone-900 text-stone-100'
-        }`}
+        className="py-8 px-4 sm:px-6 lg:px-8 border-b border-black/15 dark:border-white/10 no-print transition-colors duration-200"
+        style={{
+          backgroundColor: 'var(--theme-header-bg)',
+          color:
+            activeTheme.id === 'night-amber'
+              ? '#f6e0c0'
+              : activeTheme.id === 'sepia'
+              ? '#fdf8ee'
+              : '#ffffff',
+        }}
       >
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2.5 max-w-3xl">
@@ -392,16 +391,6 @@ function MainDashboard() {
             >
               <WifiOff className="w-4 h-4" />
               <span>بدون إنترنت</span>
-            </button>
-
-            {/* Theme Shortcut */}
-            <button
-              type="button"
-              onClick={() => setIsThemeModalOpen(true)}
-              className="p-2.5 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs transition-colors cursor-pointer border border-white/15"
-              title="تخصيص المظهر ودرجات الألوان"
-            >
-              <Palette className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
             </button>
           </div>
         </div>

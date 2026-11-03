@@ -68,17 +68,41 @@ export const StatsBar: React.FC<StatsBarProps> = ({ decisions }) => {
 
   return (
     <section
-      className={`border-b text-stone-200 py-3.5 no-print transition-colors duration-200 ${
-        activeTheme.isDark
-          ? 'bg-zinc-950/60 border-zinc-850 text-zinc-300'
-          : activeTheme.id === 'navy'
-          ? 'bg-slate-950/70 border-slate-900 text-slate-300'
-          : activeTheme.id === 'emerald'
-          ? 'bg-[#032018]/80 border-[#063327] text-emerald-100'
-          : activeTheme.id === 'parchment'
-          ? 'bg-[#1e150e]/80 border-[#2f2117] text-amber-100'
-          : 'bg-stone-900/90 border-stone-800 text-stone-300'
-      }`}
+      className="border-b py-3.5 no-print transition-colors duration-200"
+      style={{
+        backgroundColor:
+          activeTheme.id === 'oled'
+            ? '#050505'
+            : activeTheme.id === 'night-amber'
+            ? '#16120e'
+            : activeTheme.id === 'sepia'
+            ? '#443527'
+            : activeTheme.id === 'midnight'
+            ? '#0a1222'
+            : activeTheme.id === 'e-ink'
+            ? '#1c1c1c'
+            : activeTheme.id === 'emerald'
+            ? '#03231a'
+            : activeTheme.id === 'navy'
+            ? '#0a162b'
+            : activeTheme.id === 'parchment'
+            ? '#1f1610'
+            : activeTheme.isDark
+            ? '#121216'
+            : '#24201e',
+        borderColor:
+          activeTheme.id === 'oled'
+            ? '#151515'
+            : activeTheme.id === 'sepia'
+            ? '#5a4634'
+            : 'rgba(255, 255, 255, 0.08)',
+        color:
+          activeTheme.id === 'night-amber'
+            ? '#f6e0c0'
+            : activeTheme.id === 'sepia'
+            ? '#faedd9'
+            : '#e5e7eb',
+      }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 lg:gap-4">
