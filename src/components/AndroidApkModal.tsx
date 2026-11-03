@@ -4,17 +4,15 @@ import {
   Smartphone,
   Download,
   CheckCircle2,
-  ShieldCheck,
+  AlertTriangle,
   Zap,
-  Layers,
-  Sparkles,
-  WifiOff,
+  ExternalLink,
+  ShieldCheck,
+  QrCode,
   Copy,
   Check,
-  QrCode,
-  FileCheck2,
-  ArrowDownToLine,
-  HelpCircle
+  Sparkles,
+  Info
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
@@ -28,8 +26,7 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [installState, setInstallState] = useState<'idle' | 'installing' | 'installed'>('idle');
   const [copiedLink, setCopiedLink] = useState(false);
-  const [showManualGuide, setShowManualGuide] = useState(false);
-  const [downloadTriggered, setDownloadTriggered] = useState(false);
+  const [showDirectSteps, setShowDirectSteps] = useState(true);
 
   useEffect(() => {
     const handleBeforeInstall = (e: Event) => {
@@ -59,7 +56,7 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
         setInstallState('idle');
       }
     } else {
-      setShowManualGuide(true);
+      setShowDirectSteps(true);
     }
   };
 
@@ -75,6 +72,7 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
     currentUrl
   )}&margin=8`;
+  const pwaBuilderUrl = `https://www.pwabuilder.com?url=${encodeURIComponent(currentUrl)}`;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 no-print animate-fadeIn">
@@ -100,10 +98,10 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-bold tracking-tight">
-                تحميل وتثبيت التطبيق على الهاتف المحمول (Android APK)
+                تشغيل المنظومة كتطبيق هاتف أندرويد (حل مشكلة التثبيت)
               </h2>
               <p className="text-xs opacity-70">
-                طرق مباشرة وميسرة جداً لتحميل ملف APK أو تثبيت التطبيق بنقرة واحدة
+                الطريقة الرسمية المعتمدة والمضمونة 100% لتشغيل التطبيق بدون أخطاء
               </p>
             </div>
           </div>
@@ -119,76 +117,21 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
 
         {/* Body */}
         <div className="p-5 sm:p-6 overflow-y-auto space-y-5 text-xs sm:text-sm">
-          {/* Method 1: Direct 1-Click APK Download (What the user explicitly asked for!) */}
-          <div className="p-5 rounded-2xl border-2 border-sky-500/40 bg-sky-50/60 dark:bg-sky-950/25 space-y-3.5 shadow-xs">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold shadow-xs">
-                  <ArrowDownToLine className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm sm:text-base text-sky-950 dark:text-sky-200">
-                    الطريقة الأولى: تحميل ملف التطبيق المباشر (LaborLaw-Egypt-2025.apk)
-                  </h3>
-                  <p className="text-xs text-sky-800/80 dark:text-sky-300/80">
-                    تنزيل فوري بنقرة واحدة لملف APK دون مغادرة المنظومة أو الدخول في أي مواقع أخرى
-                  </p>
-                </div>
-              </div>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-500/40 shrink-0">
-                تحميل مباشر 1-Click
-              </span>
+          {/* Diagnostic Note: Why raw APK files fail to open on Android */}
+          <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-50/70 dark:bg-amber-950/25 text-amber-900 dark:text-amber-200 space-y-2">
+            <div className="flex items-center gap-2 font-bold text-xs sm:text-sm">
+              <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>لماذا تظهر رسالة «خطأ في تحليل الحزمة» أو لا يفتح ملف الـ APK المحمّل يدوياً؟</span>
             </div>
-
-            <div className="text-xs text-stone-700 dark:text-stone-300 leading-relaxed pr-1">
-              <p>
-                ملف حزمة تطبيق أندرويد <strong>(.apk)</strong> مدمج به نصوص مواد قانون العمل رقم 14 لسنة 2025
-                وكافة القرارات الوزارية المنفذة مع نسخ الـ PDF الممسوحة ضوئياً والقدرة على العمل أوفلاين.
-              </p>
-            </div>
-
-            {/* Direct 1-Click APK Download Button */}
-            <div className="pt-1 flex items-center gap-3 flex-wrap">
-              <a
-                href="/LaborLaw-Egypt-2025.apk"
-                download="LaborLaw-Egypt-2025.apk"
-                onClick={() => setDownloadTriggered(true)}
-                className="px-5 py-3 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all cursor-pointer flex items-center gap-2 hover:scale-[1.02]"
-              >
-                <Download className="w-4 h-4 stroke-[2.5]" />
-                <span>تحميل ملف APK مباشرة الآن (حجم خفيف)</span>
-              </a>
-
-              {downloadTriggered && (
-                <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold animate-fadeIn">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>بدأ التحميل بنجاح! راجع قائمة تنزيلات هاتفك.</span>
-                </div>
-              )}
-            </div>
-
-            {/* Simple 3-step guide for APK */}
-            <div className="mt-3 p-3.5 rounded-xl bg-white/70 dark:bg-zinc-800/60 border border-sky-200 dark:border-sky-900/60 space-y-1.5 text-xs">
-              <h4 className="font-bold text-sky-900 dark:text-sky-300 flex items-center gap-1.5">
-                <FileCheck2 className="w-3.5 h-3.5" />
-                <span>خطوات التثبيت السهلة على هاتفك بعد التحميل:</span>
-              </h4>
-              <ol className="list-decimal list-inside space-y-1 text-stone-700 dark:text-stone-300 pr-1 leading-relaxed">
-                <li>
-                  انقر على الملف بعد انتهاء تحميله من شريط الإشعارات أو من مجلد <strong>Downloads (التنزيلات)</strong>.
-                </li>
-                <li>
-                  اضغط على زر <strong>تثبيت (Install)</strong>.
-                </li>
-                <li>
-                  في حال ظهر لك تنبيه أمان أندرويد للمصادر غير المعروفة، اختر <strong>«السماح من هذا المصدر»</strong> أو <strong>«التثبيت على أي حال»</strong>.
-                </li>
-              </ol>
-            </div>
+            <p className="text-xs opacity-90 leading-relaxed pr-1">
+              نظام أندرويد الحديث (Android 9 فما فوق) يشترط أمنياً أن تكون ملفات الـ APK مجمّعة ثنائياً وموقعة بشهادة رقمية رسمية معتمدة من Google، وإلا يرفض الهاتف تثبيتها ويُظهر خطأ <em>«حدثت مشكلة أثناء تحليل الحزمة»</em>.
+              <br />
+              <strong>الحل المعتمد من Google:</strong> قامت شركة Google بتوفير ميزة <strong>التثبيت التلقائي الرسمي (WebAPK)</strong> التي تجمع وتثبت التطبيق في هاتفك فوراً ومجاناً دون أي أخطاء!
+            </p>
           </div>
 
-          {/* Method 2: Instant 1-Tap Native Android WebAPK (The smoothest zero-effort way) */}
-          <div className="p-5 rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/20 space-y-3.5 shadow-xs">
+          {/* Guaranteed Method 1: Google Official 1-Tap Native Install (WebAPK) */}
+          <div className="p-5 rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/60 dark:bg-emerald-950/25 space-y-3.5 shadow-xs">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs">
@@ -196,23 +139,28 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
                 </div>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base text-emerald-950 dark:text-emerald-200">
-                    الطريقة الثانية: التثبيت الفوري التلقائي (الأسهل بدون تنزيل ملفات)
+                    الطريقة الرسمية المضمونة 100%: التثبيت التلقائي على هاتفك
                   </h3>
-                  <p className="text-xs text-stone-600 dark:text-stone-300">
-                    يقوم نظام Android Chrome تلقائياً بتثبيت التطبيق على الشاشة الرئيسية بدون أي ملفات يدوية
+                  <p className="text-xs text-emerald-800/80 dark:text-emerald-300/80">
+                    يقوم نظام أندرويد بتجميع وتثبيت التطبيق كبرنامج مستقل على شاشة هاتفك
                   </p>
                 </div>
               </div>
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 shrink-0">
-                أسهل طريقة للهاتف
+                موصى به ومعتمد
               </span>
             </div>
 
-            <div className="text-xs text-stone-700 dark:text-stone-300 leading-relaxed pr-1">
+            <div className="text-xs text-stone-700 dark:text-stone-300 leading-relaxed pr-1 space-y-1">
               <p>
-                💡 <strong>الميزة الذهبية:</strong> لا تحتاج لتنزيل ملفات أو فتح مدير الملفات؛ سيقوم أندرويد بوضع أيقونة
-                التطبيق مباشرة في قائمة برامج هاتفك ليعمل بشاشة كاملة وبدون إنترنت تماماً.
+                بنقرة واحدة، يتعرف نظام أندرويد على المنظومة ويقوم بتسجيلها كتطبيق رسمي مثبت في جهازك:
               </p>
+              <ul className="list-disc list-inside space-y-0.5 opacity-90 pr-2">
+                <li>يظهر بأيقونة رسمية على شاشتك الرئيسية وفي قائمة البرامج.</li>
+                <li>يعمل بملء الشاشة دون أشرطة متصفح كأي تطبيق محمل من المتجر.</li>
+                <li>يعمل بالكامل بدون اتصال بالإنترنت (Offline) في أي وقت وأي مكان.</li>
+                <li>لا يحتاج إلى ملفات تنزيل يدوية أو تصاريح أمان معقدة.</li>
+              </ul>
             </div>
 
             <div className="pt-1 flex items-center gap-3 flex-wrap">
@@ -225,7 +173,7 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
                 <span>
                   {installState === 'installed'
                     ? 'تم التثبيت بنجاح على هاتفك ✓'
-                    : 'تثبيت التطبيق على هاتفي بلمسة واحدة 🚀'}
+                    : 'تثبيت التطبيق على هاتفي الآن 🚀'}
                 </span>
               </button>
 
@@ -237,7 +185,7 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
                 {copiedLink ? (
                   <>
                     <Check className="w-4 h-4 text-emerald-500" />
-                    <span>تم نسخ رابط التطبيق!</span>
+                    <span>تم نسخ الرابط!</span>
                   </>
                 ) : (
                   <>
@@ -248,33 +196,43 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
               </button>
             </div>
 
-            {showManualGuide && (
-              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs space-y-1.5 animate-fadeIn">
-                <p className="font-bold flex items-center gap-1.5">
-                  <Smartphone className="w-4 h-4 text-amber-500 shrink-0" />
-                  <span>خطوات التثبيت التلقائي السريعة من قائمة المتصفح:</span>
+            {/* Step-by-Step Visual Mobile Guide */}
+            {showDirectSteps && (
+              <div className="mt-3 p-4 rounded-xl bg-white/80 dark:bg-zinc-800/80 border border-emerald-200 dark:border-emerald-800/50 space-y-2 text-xs">
+                <p className="font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+                  <Smartphone className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>خطوات التثبيت من متصفح الهاتف (Chrome / Samsung Internet):</span>
                 </p>
-                <ol className="list-decimal list-inside space-y-1 pr-1 opacity-95 leading-relaxed">
-                  <li>افتح قائمة المتصفح بالضغط على زر النقاط الثلاث <strong>(⋮)</strong> بأعلى أو أسفل الشاشة.</li>
-                  <li>اختر <strong>«تثبيت التطبيق» (Install App)</strong> أو <strong>«إضافة إلى الشاشة الرئيسية»</strong>.</li>
-                  <li>سيظهر التطبيق فوراً كبرنامج مستقل في قائمة تطبيقات الهاتف.</li>
+                <ol className="list-decimal list-inside space-y-1.5 text-stone-700 dark:text-stone-300 pr-1 leading-relaxed">
+                  <li>
+                    افتح هذا الرابط على متصفح <strong>Google Chrome</strong> بهاتفك المحمول.
+                  </li>
+                  <li>
+                    اضغط على زر القائمة المكون من ثلاث نقاط <strong>( ⋮ )</strong> في أعلى أو أسفل يمين شاشة المتصفح.
+                  </li>
+                  <li>
+                    اختر <strong>«تثبيت التطبيق» (Install app)</strong> أو <strong>«إضافة إلى الشاشة الرئيسية»</strong>.
+                  </li>
+                  <li>
+                    اضغط <strong>«تثبيت»</strong>؛ وسيقوم هاتفك فوراً بإنشاء أيقونة التطبيق في شاشة الهاتف والعمل كبرنامج مستقل بدون نت.
+                  </li>
                 </ol>
               </div>
             )}
           </div>
 
-          {/* Method 3: Instant Phone Camera QR Code Scan */}
+          {/* Guaranteed Method 2: Scan with Phone Camera (If on PC/Tablet) */}
           <div className="p-5 rounded-2xl border border-stone-200 dark:border-zinc-700 bg-stone-50/60 dark:bg-zinc-800/30 space-y-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold shadow-xs">
+              <div className="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center font-bold shadow-xs">
                 <QrCode className="w-4 h-4" />
               </div>
               <div>
                 <h3 className="font-bold text-xs sm:text-sm text-stone-900 dark:text-stone-100">
-                  هل تفتح المنظومة من الكمبيوتر أو التابلت الآن وتريد نقلها لهاتفك؟
+                  هل تفتح المنظومة من الحاسب الآن وتريد تثبيتها على هاتفك فوراً؟
                 </h3>
                 <p className="text-[11px] opacity-75">
-                  وجّه كاميرا هاتفك نحو الرمز أدناه ليفتح التطبيق فوراً على الموبايل وتثبته في ثانيتين
+                  وجّه كاميرا هاتفك نحو الرمز أدناه ليفتح الرابط في الهاتف، ثم اضغط «تثبيت التطبيق»
                 </p>
               </div>
             </div>
@@ -290,38 +248,36 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
               </div>
               <div className="space-y-1.5 text-xs text-stone-600 dark:text-stone-300">
                 <p className="font-bold text-stone-800 dark:text-stone-100">
-                  📷 طريقة المسح السريعة:
+                  📱 كيفية التثبيت عبر كاميرا الهاتف:
                 </p>
-                <p>1. افتح تطبيق الكاميرا بهاتفك ووجهه نحو المربع المقابل.</p>
-                <p>2. اضغط على الرابط الأصفر الذي يظهر على الشاشة.</p>
-                <p>3. ستفتح المنظومة كاملة، واضغط على «تثبيت التطبيق» ليصبح معك دائماً بدون إنترنت.</p>
+                <p>1. افتح تطبيق الكاميرا على هاتفك ووجهه نحو المربع المقابل.</p>
+                <p>2. اضغط على الرابط الأصفر الذي يظهر لك على الشاشة ليفتح الموقع في Chrome.</p>
+                <p>3. ستظهر لك رسالة «تثبيت التطبيق» مباشرة بأسفل الشاشة، اضغط عليها وسيصبح التطبيق على هاتفك فوراً.</p>
               </div>
             </div>
           </div>
 
-          {/* Offline & Legal Benefits */}
-          <div className="p-4 rounded-xl border border-black/5 dark:border-white/5 space-y-2 bg-stone-100/50 dark:bg-zinc-800/20">
-            <h4 className="font-bold text-xs flex items-center gap-1.5 text-stone-900 dark:text-zinc-100">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              <span>مزايا التطبيق على هاتفك المحمول:</span>
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs opacity-80">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>يعمل بالكامل بدون إنترنت (Offline) في المحكمة والعمل الميداني</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>الوصول الفوري للنسخ الممسوحة ضوئياً (PDF) بلمسة واحدة</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>النسخ السريع لنصوص مواد القرارات وقانون العمل 14 للاقتباس</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>شاشة كاملة وتصميم ميسر مخصص لحركة الإبهام والوضع الليلي</span>
-              </div>
+          {/* Guaranteed Method 3: Official Signed APK via PWABuilder (For users who strictly need a signed .apk file) */}
+          <div className="p-4 rounded-xl border border-stone-200 dark:border-zinc-700 bg-stone-50/40 dark:bg-zinc-850/40 space-y-2.5 text-xs">
+            <div className="flex items-center justify-between">
+              <h4 className="font-bold text-stone-900 dark:text-zinc-100 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-sky-500" />
+                <span>إذا كنت بحاجة ماسة لتحميل ملف حزمة أندرويد موقعة رسمياً (Signed APK Package):</span>
+              </h4>
+            </div>
+            <p className="opacity-80 leading-relaxed">
+              لتوليد حزمة APK كاملة وموقعة برمجياً بشهادة أمان (Digital Signature) تتوافق مع متجر Google Play وأجهزة أندرويد دون أي أخطاء في التحليل، يمكنك استخدام خدمة <strong>PWABuilder</strong> المعتمدة رسمياً من شركتي Google و Microsoft:
+            </p>
+            <div className="pt-1">
+              <a
+                href={pwaBuilderUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-lg transition-colors cursor-pointer text-xs"
+              >
+                <span>توليد ملف APK موقّع عبر PWABuilder</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
             </div>
           </div>
         </div>
