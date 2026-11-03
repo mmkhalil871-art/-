@@ -1,5 +1,16 @@
 import React from 'react';
-import { Plus, Scale, BookOpen, Download, FileDown, Palette, FolderOpen, ShieldCheck } from 'lucide-react';
+import {
+  Plus,
+  Scale,
+  BookOpen,
+  Download,
+  FileDown,
+  Palette,
+  FolderOpen,
+  ShieldCheck,
+  Smartphone,
+  Monitor
+} from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 import { MinisterialDecision } from '../types/decision';
 import { LaborLawInfo } from '../data/laborLawData';
@@ -15,6 +26,9 @@ interface HeaderProps {
   onOpenThemeSelector: () => void;
   onOpenDocumentLibrary: () => void;
   onOpenUserAccessModal: () => void;
+  onOpenApkModal?: () => void;
+  effectiveMode?: 'mobile' | 'desktop';
+  onToggleDeviceMode?: () => void;
   totalDecisionsCount: number;
   decisions?: MinisterialDecision[];
   law?: LaborLawInfo | null;
@@ -29,6 +43,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenThemeSelector,
   onOpenDocumentLibrary,
   onOpenUserAccessModal,
+  onOpenApkModal,
+  effectiveMode = 'desktop',
+  onToggleDeviceMode,
   totalDecisionsCount,
   decisions = [],
   law,
@@ -148,6 +165,45 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Palette className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
             </button>
+
+            {/* Android APK Hub Shortcut */}
+            {onOpenApkModal && (
+              <button
+                type="button"
+                onClick={onOpenApkModal}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-sky-500/40 bg-sky-950/60 hover:bg-sky-900/70 text-sky-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                title="تطبيق الهاتف المحمول وتوليد حزمة APK للأندرويد"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
+                <span className="hidden sm:inline font-bold">تطبيق APK</span>
+              </button>
+            )}
+
+            {/* Device Mode Switcher (Mobile Streamlined vs Desktop Workspace) */}
+            {onToggleDeviceMode && (
+              <button
+                type="button"
+                onClick={onToggleDeviceMode}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-white/15 bg-white/10 hover:bg-white/15 text-white text-xs font-medium transition-all cursor-pointer shadow-xs"
+                title={
+                  effectiveMode === 'mobile'
+                    ? 'التبديل إلى نسخة الحاسب والتابلت الكاملة'
+                    : 'التبديل إلى النسخة الميسرة للهواتف الذكية'
+                }
+              >
+                {effectiveMode === 'mobile' ? (
+                  <>
+                    <Monitor className="w-3.5 h-3.5 text-amber-300" />
+                    <span className="hidden md:inline font-bold text-amber-200">واجهة الحاسب</span>
+                  </>
+                ) : (
+                  <>
+                    <Smartphone className="w-3.5 h-3.5 text-emerald-300" />
+                    <span className="hidden md:inline font-bold text-emerald-200">نسخة الموبايل</span>
+                  </>
+                )}
+              </button>
+            )}
 
             {/* Install PWA */}
             <PWAInstallButton decisions={decisions} law={law} />

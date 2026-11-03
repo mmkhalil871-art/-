@@ -122,95 +122,177 @@ export const ThemeSelectorModal: React.FC<ThemeSelectorModalProps> = ({
 
         {/* Modal Body */}
         <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
-          {/* Section 1: Themes */}
+          {/* Section 1: Themes organized by reading condition */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <label className="text-sm font-bold flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>طراز المظهر العام (5 سمات قانونية متقنة)</span>
+                <span>طراز المظهر العام ({THEMES_LIST.length} طرازات متخصصة لساعات المطالعة والعمل الليلي)</span>
               </label>
               <span
                 className={`text-xs ${
                   activeTheme.isDark ? 'text-zinc-400' : 'text-stone-500'
                 }`}
               >
-                المحدد حالياً: {activeTheme.nameAr}
+                النشط حالياً: <strong>{activeTheme.nameAr}</strong>
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {THEMES_LIST.map((theme) => {
-                const isSelected = settings.themeId === theme.id;
-                return (
-                  <button
-                    key={theme.id}
-                    type="button"
-                    onClick={() => setTheme(theme.id)}
-                    className={`relative p-3.5 rounded-xl border text-right transition-all cursor-pointer flex flex-col justify-between group ${
-                      isSelected
-                        ? activeTheme.isDark
-                          ? 'border-amber-500 bg-zinc-800/90 ring-2 ring-amber-500/30'
-                          : 'border-amber-600 bg-amber-50/40 ring-2 ring-amber-500/20'
-                        : activeTheme.isDark
-                        ? 'border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 hover:border-zinc-700'
-                        : 'border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50/60'
-                    }`}
-                  >
-                    {/* Visual Mini Preview Bar */}
-                    <div className="w-full h-11 rounded-lg overflow-hidden border border-black/10 mb-2.5 flex flex-col">
-                      <div
-                        className="h-4 w-full flex items-center px-1.5 justify-between"
-                        style={{ backgroundColor: theme.previewHeader }}
-                      >
-                        <div className="w-8 h-1 rounded-full bg-white/40" />
-                        <div className="w-2 h-2 rounded-full bg-amber-400" />
-                      </div>
-                      <div
-                        className="flex-1 flex items-center justify-center p-1"
-                        style={{ backgroundColor: theme.previewColorSecondary }}
-                      >
+            {/* Sub-Group 1: Night & Long Reading Themes */}
+            <div className="mb-4">
+              <div className="text-xs font-bold text-amber-500 dark:text-amber-400 mb-2 flex items-center gap-1.5">
+                <Moon className="w-3.5 h-3.5" />
+                <span>طرازات العمل الليلي وحماية العين من الإجهاد (حجب الضوء الأزرق والظلام التام):</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                {THEMES_LIST.filter((t) => ['oled', 'night-amber', 'sepia', 'midnight', 'dark', 'e-ink'].includes(t.id)).map((theme) => {
+                  const isSelected = settings.themeId === theme.id;
+                  return (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => setTheme(theme.id)}
+                      className={`relative p-3 rounded-xl border text-right transition-all cursor-pointer flex flex-col justify-between group ${
+                        isSelected
+                          ? activeTheme.isDark
+                            ? 'border-amber-500 bg-zinc-800/90 ring-2 ring-amber-500/30'
+                            : 'border-amber-600 bg-amber-50/50 ring-2 ring-amber-500/20'
+                          : activeTheme.isDark
+                          ? 'border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 hover:border-zinc-700'
+                          : 'border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50/60'
+                      }`}
+                    >
+                      {/* Visual Mini Preview Bar */}
+                      <div className="w-full h-9 rounded-lg overflow-hidden border border-black/10 mb-2 flex flex-col">
                         <div
-                          className="w-4/5 h-2 rounded-xs opacity-75 shadow-2xs"
-                          style={{
-                            backgroundColor: theme.isDark ? '#27272a' : '#ffffff',
-                            border: `1px solid ${theme.isDark ? '#3f3f46' : '#e2e8f0'}`,
-                          }}
-                        />
+                          className="h-3.5 w-full flex items-center px-1.5 justify-between"
+                          style={{ backgroundColor: theme.previewHeader }}
+                        >
+                          <div className="w-6 h-1 rounded-full bg-white/40" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                        </div>
+                        <div
+                          className="flex-1 flex items-center justify-center p-0.5"
+                          style={{ backgroundColor: theme.previewColorSecondary }}
+                        >
+                          <div
+                            className="w-4/5 h-1.5 rounded-xs opacity-75 shadow-2xs"
+                            style={{
+                              backgroundColor: theme.isDark ? '#27272a' : '#ffffff',
+                              border: `1px solid ${theme.isDark ? '#3f3f46' : '#e2e8f0'}`,
+                            }}
+                          />
+                        </div>
                       </div>
-                    </div>
 
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm tracking-tight">
-                          {theme.nameAr}
-                        </span>
-                        {isSelected && (
-                          <span
-                            className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs"
-                            style={{ backgroundColor: activeAccent.colorHex }}
-                          >
-                            <Check className="w-3 h-3 stroke-[3]" />
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs sm:text-sm tracking-tight">
+                            {theme.nameAr}
                           </span>
-                        )}
+                          {isSelected && (
+                            <span
+                              className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px]"
+                              style={{ backgroundColor: activeAccent.colorHex }}
+                            >
+                              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          className={`text-[10px] font-medium mt-0.5 ${
+                            activeTheme.isDark ? 'text-zinc-400' : 'text-stone-500'
+                          }`}
+                        >
+                          {theme.subtitleAr}
+                        </div>
+                        <p
+                          className={`text-[10px] mt-1 line-clamp-2 leading-relaxed ${
+                            activeTheme.isDark ? 'text-zinc-400' : 'text-stone-500'
+                          }`}
+                        >
+                          {theme.descriptionAr}
+                        </p>
                       </div>
-                      <div
-                        className={`text-[11px] font-medium mt-0.5 ${
-                          activeTheme.isDark ? 'text-zinc-400' : 'text-stone-500'
-                        }`}
-                      >
-                        {theme.subtitleAr}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Sub-Group 2: Institutional & Daylight Themes */}
+            <div>
+              <div className="text-xs font-bold opacity-75 mb-2 flex items-center gap-1.5">
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
+                <span>طرازات العمل النهاري والمؤسسي الوقاري:</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                {THEMES_LIST.filter((t) => ['classic', 'navy', 'emerald', 'parchment'].includes(t.id)).map((theme) => {
+                  const isSelected = settings.themeId === theme.id;
+                  return (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => setTheme(theme.id)}
+                      className={`relative p-3 rounded-xl border text-right transition-all cursor-pointer flex flex-col justify-between group ${
+                        isSelected
+                          ? activeTheme.isDark
+                            ? 'border-amber-500 bg-zinc-800/90 ring-2 ring-amber-500/30'
+                            : 'border-amber-600 bg-amber-50/50 ring-2 ring-amber-500/20'
+                          : activeTheme.isDark
+                          ? 'border-zinc-800 bg-zinc-800/40 hover:bg-zinc-800 hover:border-zinc-700'
+                          : 'border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50/60'
+                      }`}
+                    >
+                      {/* Visual Mini Preview Bar */}
+                      <div className="w-full h-8 rounded-lg overflow-hidden border border-black/10 mb-2 flex flex-col">
+                        <div
+                          className="h-3 w-full flex items-center px-1.5 justify-between"
+                          style={{ backgroundColor: theme.previewHeader }}
+                        >
+                          <div className="w-6 h-1 rounded-full bg-white/40" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                        </div>
+                        <div
+                          className="flex-1 flex items-center justify-center p-0.5"
+                          style={{ backgroundColor: theme.previewColorSecondary }}
+                        >
+                          <div
+                            className="w-4/5 h-1.5 rounded-xs opacity-75 shadow-2xs"
+                            style={{
+                              backgroundColor: theme.isDark ? '#27272a' : '#ffffff',
+                              border: `1px solid ${theme.isDark ? '#3f3f46' : '#e2e8f0'}`,
+                            }}
+                          />
+                        </div>
                       </div>
-                      <p
-                        className={`text-[11px] mt-1.5 line-clamp-2 leading-relaxed ${
-                          activeTheme.isDark ? 'text-zinc-500' : 'text-stone-500'
-                        }`}
-                      >
-                        {theme.descriptionAr}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
+
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs tracking-tight">
+                            {theme.nameAr}
+                          </span>
+                          {isSelected && (
+                            <span
+                              className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px]"
+                              style={{ backgroundColor: activeAccent.colorHex }}
+                            >
+                              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                            </span>
+                          )}
+                        </div>
+                        <div
+                          className={`text-[10px] font-medium mt-0.5 ${
+                            activeTheme.isDark ? 'text-zinc-400' : 'text-stone-500'
+                          }`}
+                        >
+                          {theme.subtitleAr}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

@@ -1,4 +1,14 @@
-export type ThemeId = 'classic' | 'dark' | 'navy' | 'emerald' | 'parchment';
+export type ThemeId =
+  | 'classic'
+  | 'dark'
+  | 'navy'
+  | 'emerald'
+  | 'parchment'
+  | 'oled'
+  | 'sepia'
+  | 'night-amber'
+  | 'midnight'
+  | 'e-ink';
 
 export type AccentColorId = 'amber' | 'blue' | 'emerald' | 'ruby' | 'violet' | 'teal';
 
@@ -74,6 +84,91 @@ export const THEMES_LIST: ThemeConfig[] = [
     previewColorPrimary: '#09090b',
     previewColorSecondary: '#18181b',
     previewHeader: '#141416',
+  },
+  {
+    id: 'oled',
+    nameAr: 'الأسود الحالك OLED',
+    subtitleAr: 'شاشات الهواتف والظلام التام (صفر إجهاد)',
+    descriptionAr: 'خلفية سوداء نقية 100% توفر بطارية شاشات OLED وتلغي أي توهج في ظروف العمل الليلي الحالك.',
+    isDark: true,
+    headerBgClass: 'bg-black',
+    headerTextClass: 'text-zinc-100',
+    bodyBgClass: 'bg-black',
+    cardBgClass: 'bg-[#0a0a0a]',
+    cardBorderClass: 'border-zinc-850',
+    textPrimaryClass: 'text-zinc-100',
+    textMutedClass: 'text-zinc-400',
+    previewColorPrimary: '#000000',
+    previewColorSecondary: '#0d0d0d',
+    previewHeader: '#050505',
+  },
+  {
+    id: 'night-amber',
+    nameAr: 'الكهرماني الليلي الدافئ',
+    subtitleAr: 'فلترة الضوء الأزرق أثناء السهر والمراجعة',
+    descriptionAr: 'تدرجات فحمية غائرة مع نصوص كهرمانية دافئة مصممة خصيصاً لساعات العمل الليلي الطويلة.',
+    isDark: true,
+    headerBgClass: 'bg-[#120f0c]',
+    headerTextClass: 'text-amber-100',
+    bodyBgClass: 'bg-[#181410]',
+    cardBgClass: 'bg-[#221c16]',
+    cardBorderClass: 'border-[#382f25]',
+    textPrimaryClass: 'text-[#f6e0c0]',
+    textMutedClass: 'text-[#b89f82]',
+    previewColorPrimary: '#120f0c',
+    previewColorSecondary: '#1f1913',
+    previewHeader: '#261e16',
+  },
+  {
+    id: 'sepia',
+    nameAr: 'سيبيا القراءة الهادئة',
+    subtitleAr: 'ملمس الكتب الورقية والمطالعة الممتدة',
+    descriptionAr: 'درجات دافئة طبيعية مريحة للعين تمنع إجهاد البصر تماماً عند مراجعة مئات المواد القانونية.',
+    isDark: false,
+    headerBgClass: 'bg-[#3b2f23]',
+    headerTextClass: 'text-[#fbf5eb]',
+    bodyBgClass: 'bg-[#f7eedb]',
+    cardBgClass: 'bg-[#fdf8ee]',
+    cardBorderClass: 'border-[#e3d3b6]',
+    textPrimaryClass: 'text-[#2e2318]',
+    textMutedClass: 'text-[#6c5844]',
+    previewColorPrimary: '#3b2f23',
+    previewColorSecondary: '#f7eedb',
+    previewHeader: '#483b2e',
+  },
+  {
+    id: 'midnight',
+    nameAr: 'أزرق منتصف الليل العميق',
+    subtitleAr: 'هدوء الليل والأبحاث القانونية المتأخرة',
+    descriptionAr: 'أزرق ليلي عميق مستوحى من سماء الليل الهادئة مع تباين بلوري ناعم يخفف التوتر البصري.',
+    isDark: true,
+    headerBgClass: 'bg-[#050a14]',
+    headerTextClass: 'text-sky-100',
+    bodyBgClass: 'bg-[#0a1120]',
+    cardBgClass: 'bg-[#111c34]',
+    cardBorderClass: 'border-[#1d2d52]',
+    textPrimaryClass: 'text-[#f0f4fa]',
+    textMutedClass: 'text-[#90a2c2]',
+    previewColorPrimary: '#050a14',
+    previewColorSecondary: '#0e172c',
+    previewHeader: '#142240',
+  },
+  {
+    id: 'e-ink',
+    nameAr: 'الورق الإلكتروني E-Ink',
+    subtitleAr: 'قراءة حيادية عالية التباين بلا ألوان مشتتة',
+    descriptionAr: 'نمط رمادي ناصع مستوحى من أجهزة الحبر الإلكتروني والكتب، يركز 100% على وضوح نصوص المواد.',
+    isDark: false,
+    headerBgClass: 'bg-[#141414]',
+    headerTextClass: 'text-stone-100',
+    bodyBgClass: 'bg-[#efefef]',
+    cardBgClass: 'bg-[#ffffff]',
+    cardBorderClass: 'border-[#cccccc]',
+    textPrimaryClass: 'text-[#0a0a0a]',
+    textMutedClass: 'text-[#555555]',
+    previewColorPrimary: '#141414',
+    previewColorSecondary: '#eaeaea',
+    previewHeader: '#262626',
   },
   {
     id: 'navy',

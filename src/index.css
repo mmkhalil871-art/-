@@ -57,6 +57,65 @@
     --theme-text-muted: #6e5845;
   }
 
+  /* Ultra Dark OLED Pitch Black Theme */
+  [data-theme="oled"] {
+    --theme-header-bg: #000000;
+    --theme-body-bg: #000000;
+    --theme-card-bg: #080808;
+    --theme-card-border: #1a1a1a;
+    --theme-text-primary: #f4f4f5;
+    --theme-text-muted: #71717a;
+    --accent-bg-soft: rgba(217, 119, 6, 0.15);
+    --accent-text: #fbbf24;
+    color-scheme: dark;
+  }
+
+  /* Warm Night-Amber Theme (Blue light filter for long night work) */
+  [data-theme="night-amber"] {
+    --theme-header-bg: #120f0c;
+    --theme-body-bg: #181410;
+    --theme-card-bg: #221c16;
+    --theme-card-border: #382f25;
+    --theme-text-primary: #f6e0c0;
+    --theme-text-muted: #b89f82;
+    --accent-bg-soft: rgba(245, 158, 11, 0.2);
+    --accent-text: #fcd34d;
+    color-scheme: dark;
+  }
+
+  /* Warm Sepia Reading Theme (Zero Eye Strain for Long Reading) */
+  [data-theme="sepia"] {
+    --theme-header-bg: #3b2f23;
+    --theme-body-bg: #f7eedb;
+    --theme-card-bg: #fdf8ee;
+    --theme-card-border: #e3d3b6;
+    --theme-text-primary: #2e2318;
+    --theme-text-muted: #6c5844;
+  }
+
+  /* Deep Midnight Blue Theme */
+  [data-theme="midnight"] {
+    --theme-header-bg: #050a14;
+    --theme-body-bg: #0a1120;
+    --theme-card-bg: #111c34;
+    --theme-card-border: #1d2d52;
+    --theme-text-primary: #f0f4fa;
+    --theme-text-muted: #90a2c2;
+    --accent-bg-soft: rgba(56, 189, 248, 0.15);
+    --accent-text: #7dd3fc;
+    color-scheme: dark;
+  }
+
+  /* E-Ink Paper Theme (High-contrast neutral) */
+  [data-theme="e-ink"] {
+    --theme-header-bg: #141414;
+    --theme-body-bg: #efefef;
+    --theme-card-bg: #ffffff;
+    --theme-card-border: #cccccc;
+    --theme-text-primary: #0a0a0a;
+    --theme-text-muted: #555555;
+  }
+
   /* Accent Color Variants */
   [data-accent="amber"] {
     --accent-color: #d97706;

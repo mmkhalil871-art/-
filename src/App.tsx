@@ -26,8 +26,12 @@ import { LawUploadAndSyncModal } from './components/LawUploadAndSyncModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { DocumentLibraryModal } from './components/DocumentLibraryModal';
 import { UserAccessModal } from './components/UserAccessModal';
+import { MobileDecisionCard } from './components/MobileDecisionCard';
+import { MobileBottomDock } from './components/MobileBottomDock';
+import { AndroidApkModal } from './components/AndroidApkModal';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { UserAccessProvider, useUserAccess } from './context/UserAccessContext';
+import { DeviceModeProvider, useDeviceMode } from './context/DeviceModeContext';
 import { LaborLawInfo } from './data/laborLawData';
 import { getStoredLaborLaw, saveStoredLaborLaw, deleteStoredLaborLaw } from './utils/lawStorage';
 import {
@@ -38,12 +42,14 @@ import {
   WifiOff,
   Palette,
   ShieldCheck,
-  Shield
+  Shield,
+  Smartphone
 } from 'lucide-react';
 
 function MainDashboard() {
   const { activeTheme, activeAccent } = useTheme();
   const { currentUser, isSuperAdmin, canEditTexts, canAddDocuments, canDelete, canManageUsers } = useUserAccess();
+  const { effectiveMode, toggleMode, isMobile } = useDeviceMode();
 
   const [decisions, setDecisions] = useState<MinisterialDecision[]>([]);
   const [currentLaw, setCurrentLaw] = useState<LaborLawInfo | null>(getStoredLaborLaw());
@@ -66,6 +72,7 @@ function MainDashboard() {
   const [isLawGuideOpen, setIsLawGuideOpen] = useState(false);
   const [isBackupOpen, setIsBackupOpen] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+  const [isApkModalOpen, setIsApkModalOpen] = useState(false);
   const [isLaborLawModalOpen, setIsLaborLawModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
@@ -301,6 +308,9 @@ function MainDashboard() {
         onOpenThemeSelector={() => setIsThemeModalOpen(true)}
         onOpenDocumentLibrary={() => setIsDocumentLibraryOpen(true)}
         onOpenUserAccessModal={() => setIsUserAccessModalOpen(true)}
+        onOpenApkModal={() => setIsApkModalOpen(true)}
+        effectiveMode={effectiveMode}
+        onToggleDeviceMode={toggleMode}
         totalDecisionsCount={decisions.length}
         decisions={decisions}
         law={currentLaw}
@@ -360,6 +370,17 @@ function MainDashboard() {
             >
               <FolderOpen className="w-4 h-4 text-emerald-200" />
               <span>مكتبة الوثائق الذكية</span>
+            </button>
+
+            {/* Mobile / APK App Launcher */}
+            <button
+              type="button"
+              onClick={() => setIsApkModalOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] cursor-pointer border border-sky-400/30"
+              title="تثبيت تطبيق أندرويد APK للهاتف المحمول"
+            >
+              <Smartphone className="w-4 h-4 text-sky-200" />
+              <span>تطبيق الهاتف (APK)</span>
             </button>
 
             {/* Offline Launcher */}
@@ -502,6 +523,36 @@ function MainDashboard() {
                 + إضافة تشريع جديد مع إرفاق PDF
               </button>
             </div>
+          </div>
+        ) : effectiveMode === 'mobile' ? (
+          <div className="space-y-3.5 pb-20 max-w-2xl mx-auto">
+            <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-xs">
+              <span className="font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
+                <Smartphone className="w-4 h-4 text-emerald-500" />
+                <span>النسخة الميسرة للموبايل ({filteredDecisions.length} تشريع)</span>
+              </span>
+              <button
+                type="button"
+                onClick={toggleMode}
+                className="text-sky-600 dark:text-sky-400 font-bold hover:underline cursor-pointer flex items-center gap-1"
+              >
+                <span>التبديل لعرض الحاسب والتابلت</span>
+              </button>
+            </div>
+            {filteredDecisions.map((decision) => (
+              <MobileDecisionCard
+                key={decision.id}
+                decision={decision}
+                onView={handleViewDecision}
+                onPrint={handlePrintDirect}
+                onEdit={(d) => {
+                  setEditingDecision(d);
+                  setIsFormOpen(true);
+                }}
+                onDelete={handleDeleteDecision}
+                onToggleFavorite={handleToggleFavorite}
+              />
+            ))}
           </div>
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -686,16 +737,45 @@ function MainDashboard() {
         onClose={() => setIsUserAccessModalOpen(false)}
         onShowToast={showToast}
       />
+
+      {/* Android APK & WebAPK Hub Modal */}
+      <AndroidApkModal
+        isOpen={isApkModalOpen}
+        onClose={() => setIsApkModalOpen(false)}
+      />
+
+      {/* Mobile Streamlined Bottom Quick Dock */}
+      <MobileBottomDock
+        onOpenSearch={() => {
+          const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+          if (searchInput) {
+            searchInput.focus();
+            searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }}
+        onToggleFavorites={() => setShowOnlyFavorites(!showOnlyFavorites)}
+        showOnlyFavorites={showOnlyFavorites}
+        onOpenLibrary={() => setIsDocumentLibraryOpen(true)}
+        onOpenTheme={() => setIsThemeModalOpen(true)}
+        onAddNew={() => {
+          setEditingDecision(null);
+          setIsFormOpen(true);
+        }}
+        onOpenApkModal={() => setIsApkModalOpen(true)}
+        totalCount={decisions.length}
+      />
     </div>
   );
 }
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <UserAccessProvider>
-        <MainDashboard />
-      </UserAccessProvider>
-    </ThemeProvider>
+    <DeviceModeProvider>
+      <ThemeProvider>
+        <UserAccessProvider>
+          <MainDashboard />
+        </UserAccessProvider>
+      </ThemeProvider>
+    </DeviceModeProvider>
   );
 }
