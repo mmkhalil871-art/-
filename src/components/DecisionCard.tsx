@@ -14,7 +14,8 @@ import {
   Check,
   X,
   Plus,
-  BookOpen
+  BookOpen,
+  Scale
 } from 'lucide-react';
 import { MinisterialDecision } from '../types/decision';
 import { exportDecisionAsWord, exportDecisionAsText } from '../utils/exportUtils';
@@ -48,6 +49,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
   onToggleFavorite,
 }) => {
   const [showSaveMenu, setShowSaveMenu] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const { activeTheme, activeAccent } = useTheme();
   const { canEditTexts, canDelete, canAddDocuments } = useUserAccess();
 
@@ -127,14 +129,24 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
 
   return (
     <article
-      className={`group rounded-2xl border p-5 sm:p-6 transition-all duration-200 flex flex-col justify-between hover:shadow-lg hover:-translate-y-0.5 ${
+      className={`group relative overflow-hidden rounded-2xl border p-5 sm:p-6 transition-all duration-200 flex flex-col justify-between specular-border-t card-elevated-hover ${
         activeTheme.isDark
           ? 'bg-zinc-850/90 border-zinc-800 hover:border-zinc-700 text-zinc-100 shadow-xs'
           : activeTheme.id === 'parchment'
           ? 'bg-[#fffdf9] border-[#e6dbc9] hover:border-[#b48d61] text-[#281d14] shadow-xs'
           : 'bg-white border-stone-200/90 hover:border-stone-300 text-stone-900 shadow-xs'
       }`}
+      style={{
+        boxShadow: decision.isFavorite
+          ? '0 4px 20px -4px rgba(245, 158, 11, 0.15)'
+          : undefined,
+      }}
     >
+      {/* Delicate Legal Scales Watermark in background */}
+      <div className="absolute -left-6 -bottom-6 pointer-events-none opacity-[0.035] group-hover:opacity-[0.075] transition-opacity duration-300 text-current">
+        <Scale className="w-32 h-32 transform -rotate-12" strokeWidth={1.2} />
+      </div>
+
       <div>
         {/* Top Kicker */}
         <div className="flex items-center justify-between text-xs opacity-80 mb-2.5">
@@ -349,7 +361,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
         <button
           type="button"
           onClick={() => onView(decision, 'summary')}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border transition-all hover:scale-[1.02] cursor-pointer"
+          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 min-h-[38px] text-xs font-bold rounded-xl border transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
           style={{
             backgroundColor: `${activeAccent.colorHex}15`,
             borderColor: `${activeAccent.colorHex}35`,
@@ -367,7 +379,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           <button
             type="button"
             onClick={() => onView(decision, 'scanned_pdf')}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/80 text-rose-700 dark:text-rose-300 transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center gap-1 px-2.5 py-2 min-h-[38px] text-xs font-bold rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/80 text-rose-700 dark:text-rose-300 transition-colors active:scale-95 cursor-pointer"
             title="استعراض النسخة الرسمية الممسوحة ضوئياً (PDF)"
           >
             <FileDown className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
@@ -378,7 +390,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           <button
             type="button"
             onClick={() => exportDecisionAsWord(decision)}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-xl border border-sky-200 dark:border-sky-900/60 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-950/80 text-sky-700 dark:text-sky-300 transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center gap-1 px-2.5 py-2 min-h-[38px] text-xs font-bold rounded-xl border border-sky-200 dark:border-sky-900/60 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-950/80 text-sky-700 dark:text-sky-300 transition-colors active:scale-95 cursor-pointer"
             title="تحميل نسخة وورد (Word .doc) مكتوبة لتيسير النقل"
           >
             <FileText className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
@@ -390,7 +402,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
             <button
               type="button"
               onClick={() => setShowSaveMenu(!showSaveMenu)}
-              className="p-1.5 rounded-xl border border-stone-200 dark:border-zinc-700 hover:bg-black/5 dark:hover:bg-white/5 opacity-70 hover:opacity-100 transition-colors cursor-pointer"
+              className="p-2 min-h-[38px] min-w-[38px] flex items-center justify-center rounded-xl border border-stone-200 dark:border-zinc-700 hover:bg-black/5 dark:hover:bg-white/5 opacity-75 hover:opacity-100 transition-colors cursor-pointer"
               title="خيارات إضافية"
             >
               <ChevronDown className="w-3.5 h-3.5" />
@@ -447,19 +459,40 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
                 )}
 
                 {canDelete && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowSaveMenu(false);
-                      if (confirm(`هل أنت متأكد من حذف القرار رقم (${decision.decisionNumber})؟`)) {
-                        onDelete(decision.id);
-                      }
-                    }}
-                    className="w-full text-right px-3 py-1.5 rounded hover:bg-rose-50 dark:hover:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center gap-2 cursor-pointer font-semibold"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>حذف القرار (صلاحية الحذف)</span>
-                  </button>
+                  confirmDelete ? (
+                    <div className="p-2 bg-rose-500/10 rounded-lg border border-rose-500/30 text-[11px] space-y-1.5 my-1">
+                      <div className="text-rose-600 dark:text-rose-400 font-bold">تأكيد حذف القرار رقم {decision.decisionNumber}؟</div>
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDelete(false)}
+                          className="px-2 py-0.5 rounded text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200"
+                        >
+                          إلغاء
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowSaveMenu(false);
+                            setConfirmDelete(false);
+                            onDelete(decision.id);
+                          }}
+                          className="px-2.5 py-0.5 rounded bg-rose-600 text-white font-bold hover:bg-rose-500"
+                        >
+                          حذف نهائي
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(true)}
+                      className="w-full text-right px-3 py-1.5 rounded hover:bg-rose-50 dark:hover:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center gap-2 cursor-pointer font-semibold"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>حذف القرار (صلاحية الحذف)</span>
+                    </button>
+                  )
                 )}
               </div>
             )}

@@ -205,9 +205,18 @@ export function exportDecisionAsPdf(decision: MinisterialDecision): void {
     return;
   }
 
-  // Open official print / PDF rendering popup formatted as Egyptian Official Gazette
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
+  // Create a hidden iframe to print safely without window.open
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow?.document;
+  if (!doc) {
     window.print();
     return;
   }
@@ -226,7 +235,7 @@ export function exportDecisionAsPdf(decision: MinisterialDecision): void {
     )
     .join('');
 
-  printWindow.document.write(`
+  doc.write(`
     <!DOCTYPE html>
     <html dir="rtl" lang="ar">
     <head>
@@ -316,18 +325,20 @@ export function exportDecisionAsPdf(decision: MinisterialDecision): void {
           <div style="font-size: 8.5pt; color: #9ca3af; margin-top: 4px;">[معتمد وموقع رقمياً]</div>
         </div>
       </div>
-
-      <script>
-        window.onload = function() {
-          setTimeout(function() {
-            window.print();
-          }, 350);
-        };
-      </script>
     </body>
     </html>
   `);
-  printWindow.document.close();
+  doc.close();
+
+  setTimeout(() => {
+    iframe.contentWindow?.focus();
+    iframe.contentWindow?.print();
+    setTimeout(() => {
+      if (document.body.contains(iframe)) {
+        document.body.removeChild(iframe);
+      }
+    }, 1000);
+  }, 400);
 }
 
 /**

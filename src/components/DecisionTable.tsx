@@ -590,15 +590,7 @@ export const DecisionTable: React.FC<DecisionTableProps> = ({
                       {canDelete && (
                         <button
                           type="button"
-                          onClick={() => {
-                            if (
-                              confirm(
-                                `هل أنت متأكد من حذف القرار رقم (${decision.decisionNumber})؟`
-                              )
-                            ) {
-                              onDelete(decision.id);
-                            }
-                          }}
+                          onClick={() => onDelete(decision.id)}
                           className="p-1 rounded-md opacity-60 hover:opacity-100 hover:bg-rose-50 dark:hover:bg-rose-950 text-rose-500 transition-colors cursor-pointer"
                           title="حذف القرار (صلاحية الحذف)"
                         >

@@ -31,11 +31,12 @@ import {
 } from '../utils/decisionDocumentParser';
 import {
   savePdfToStorage,
+  getPdfFromStorage,
   formatFileSize,
   getDocumentsLibraryList,
   StoredDocumentItem
 } from '../utils/documentLibraryStorage';
-import { exportDecisionAsWord } from '../utils/exportUtils';
+import { exportDecisionAsWord, exportDecisionAsPdf } from '../utils/exportUtils';
 import { useTheme } from '../context/ThemeContext';
 
 interface DocumentLibraryModalProps {
@@ -154,7 +155,7 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
       );
     } catch (err) {
       console.error('Error during auto-organization:', err);
-      alert('حدث خطأ أثناء تنظيم المستندات، يرجى المحاولة مرة أخرى.');
+      setOrganizationSuccessMessage('تعذر استكمال تنظيم المستندات، يرجى التحقق من الملفات والمحاولة مجدداً.');
     } finally {
       setIsOrganizing(false);
     }
@@ -184,9 +185,9 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
   const wordCount = storedDocuments.filter((d) => d.docType === 'written_word').length;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 font-cairo">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 font-cairo">
       <div
-        className={`w-full max-w-5xl rounded-2xl shadow-2xl border overflow-hidden transition-colors flex flex-col max-h-[92vh] ${
+        className={`w-full max-w-5xl rounded-2xl shadow-[0_25px_70px_-15px_rgba(0,0,0,0.5)] border overflow-hidden transition-colors flex flex-col max-h-[92vh] specular-border-t ${
           activeTheme.isDark
             ? 'bg-zinc-900 border-zinc-700 text-zinc-100'
             : 'bg-white border-stone-200 text-stone-900'
@@ -315,7 +316,7 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
             }
           >
             <FolderOpen className="w-4 h-4" />
-            <span>مستودع الواتئق والمكتبة المعتمدة ({storedDocuments.length})</span>
+            <span>مستودع الوثائق والمكتبة المعتمدة ({storedDocuments.length})</span>
           </button>
 
           <button
@@ -359,24 +360,30 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
 
             {/* Drag & Drop Multi-file Upload Box */}
             <div
-              className={`p-6 sm:p-8 rounded-2xl border-2 border-dashed text-center transition-all ${
+              className={`relative overflow-hidden group p-6 sm:p-8 rounded-2xl border-2 border-dashed text-center transition-all ${
                 activeTheme.isDark
                   ? 'border-zinc-700 bg-zinc-850 hover:border-zinc-500'
                   : 'border-stone-300 bg-stone-50 hover:border-stone-400 hover:bg-stone-100/60'
               }`}
             >
+              {/* Subtle dot matrix pattern */}
+              <div className="absolute inset-0 bg-dot-matrix opacity-30 pointer-events-none" />
+
               <div
-                className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center text-white mb-4 shadow-sm"
-                style={{ backgroundColor: activeAccent.colorHex }}
+                className="relative w-14 h-14 rounded-2xl mx-auto flex items-center justify-center text-white mb-4 shadow-md transition-transform group-hover:scale-110"
+                style={{
+                  backgroundColor: activeAccent.colorHex,
+                  boxShadow: `0 0 20px -2px ${activeAccent.colorHex}45`,
+                }}
               >
                 <Upload className="w-7 h-7" />
               </div>
 
-              <h3 className="text-base sm:text-lg font-bold mb-1">
+              <h3 className="relative text-base sm:text-lg font-bold mb-1">
                 اسحب وأفلت كافة مستندات القرارات الوزارية هنا
               </h3>
               <p
-                className={`text-xs max-w-xl mx-auto mb-5 leading-relaxed ${
+                className={`relative text-xs max-w-xl mx-auto mb-5 leading-relaxed ${
                   activeTheme.isDark ? 'text-zinc-400' : 'text-stone-500'
                 }`}
               >
@@ -385,11 +392,11 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
                 تصنيفها تلقائياً، وربطها بمواد قانون العمل رقم 14 لسنة 2025.
               </p>
 
-              <div className="flex flex-wrap items-center justify-center gap-3">
+              <div className="relative flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white shadow-md transition-transform active:scale-95 cursor-pointer"
+                  className="btn-shimmer inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white shadow-md transition-transform active:scale-95 cursor-pointer"
                   style={{ backgroundColor: activeAccent.colorHex }}
                 >
                   <FileText className="w-4 h-4" />
@@ -547,6 +554,33 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
 
                       {/* Actions */}
                       <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                        {(() => {
+                          const matchedDec = decisions.find(
+                            (d) =>
+                              d.id === doc.matchedExistingDecisionId ||
+                              (d.decisionNumber === doc.detectedDecisionNumber &&
+                                String(d.year) === String(doc.detectedYear))
+                          );
+                          if (!matchedDec) return null;
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onClose();
+                                onViewDecision(
+                                  matchedDec,
+                                  doc.extension === 'pdf' ? 'scanned_pdf' : 'written_text'
+                                );
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 transition-colors cursor-pointer"
+                              title="استعراض هذا التشريع فوراً"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>استعراض القرار</span>
+                            </button>
+                          );
+                        })()}
+
                         <button
                           type="button"
                           onClick={() => handleRemovePendingFile(doc.id)}
@@ -625,6 +659,19 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
               </div>
             </div>
 
+            {/* Guidance banner for clicking */}
+            <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-900 dark:text-amber-200 text-xs">
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="font-semibold">
+                  يمكنك النقر مباشرة على أي صف أو اسم مستند أو رقم تشريع لاستعراضه فوراً بالنسخ الرسمية (PDF / Word) وقراءة مواده.
+                </span>
+              </div>
+              <span className="text-[11px] opacity-75 hidden sm:inline whitespace-nowrap">
+                💡 اضغط على أي سطر لفتحه
+              </span>
+            </div>
+
             {/* Documents List Table */}
             {filteredRepositoryDocs.length === 0 ? (
               <div className="p-12 text-center opacity-60">
@@ -632,7 +679,7 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
                 <p>لا توجد وثائق مطابقة لخيارات البحث</p>
               </div>
             ) : (
-              <div className="border rounded-xl overflow-hidden">
+              <div className="border rounded-xl overflow-hidden shadow-2xs">
                 <table className="w-full text-right text-xs">
                   <thead
                     className={`border-b font-semibold ${
@@ -644,11 +691,11 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
                     <tr>
                       <th className="py-3 px-4 w-12 text-center">النوع</th>
                       <th className="py-3 px-4">اسم المستند والملف</th>
-                      <th className="py-3 px-4 w-32">القرار المرتبط</th>
+                      <th className="py-3 px-4 w-36">القرار المرتبط</th>
                       <th className="py-3 px-4 w-36">التصنيف</th>
                       <th className="py-3 px-4 w-28">مواد القانون</th>
                       <th className="py-3 px-4 w-24">الحجم</th>
-                      <th className="py-3 px-4 w-40 text-center">الإجراءات</th>
+                      <th className="py-3 px-4 w-48 text-center">الإجراءات</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-black/5 dark:divide-white/5">
@@ -657,7 +704,21 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
                       return (
                         <tr
                           key={doc.id}
-                          className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                          onClick={() => {
+                            if (matchedDecision) {
+                              onClose();
+                              onViewDecision(
+                                matchedDecision,
+                                doc.docType === 'scanned_pdf' ? 'scanned_pdf' : 'written_text'
+                              );
+                            }
+                          }}
+                          className={`cursor-pointer transition-colors group ${
+                            activeTheme.isDark
+                              ? 'hover:bg-amber-500/10'
+                              : 'hover:bg-amber-50/80'
+                          }`}
+                          title={`انقر لاستعراض قرار رقم (${doc.decisionNumber}) - ${doc.decisionTitle}`}
                         >
                           <td className="py-3 px-4 text-center">
                             {doc.docType === 'scanned_pdf' ? (
@@ -671,13 +732,32 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
                             )}
                           </td>
                           <td className="py-3 px-4 font-semibold">
-                            <div>{doc.filename}</div>
-                            <div className="text-[11px] opacity-60 line-clamp-1 mt-0.5">
+                            <div className="flex items-center gap-2">
+                              <Eye className="w-3.5 h-3.5 text-amber-500 shrink-0 opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                              <span className="group-hover:underline group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                                {doc.filename}
+                              </span>
+                            </div>
+                            <div className="text-[11px] opacity-70 line-clamp-1 mt-0.5 pr-5.5 font-sans">
                               {doc.decisionTitle}
                             </div>
                           </td>
                           <td className="py-3 px-4 font-mono font-bold whitespace-nowrap">
-                            قرار رقم {doc.decisionNumber}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (matchedDecision) {
+                                  onClose();
+                                  onViewDecision(matchedDecision, 'summary');
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                              title="استعراض ملخص ومواد هذا القرار"
+                            >
+                              <span>قرار رقم {doc.decisionNumber}</span>
+                              <ExternalLink className="w-3 h-3 opacity-60" />
+                            </button>
                           </td>
                           <td className="py-3 px-4 opacity-75 whitespace-nowrap">
                             {doc.category}
@@ -688,35 +768,55 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
                           <td className="py-3 px-4 font-mono tabular-nums opacity-60 whitespace-nowrap">
                             {formatFileSize(doc.size)}
                           </td>
-                          <td className="py-3 px-4 text-center whitespace-nowrap">
+                          <td className="py-3 px-4 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-center gap-1.5">
                               {matchedDecision && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    onClose();
-                                    onViewDecision(
-                                      matchedDecision,
-                                      doc.docType === 'scanned_pdf' ? 'scanned_pdf' : 'written_text'
-                                    );
-                                  }}
-                                  className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-black/5 dark:bg-white/10 hover:opacity-100 cursor-pointer"
-                                  title="استعراض القرار في التطبيق"
-                                >
-                                  <Eye className="w-3.5 h-3.5" />
-                                  <span>استعراض</span>
-                                </button>
-                              )}
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      onClose();
+                                      onViewDecision(
+                                        matchedDecision,
+                                        doc.docType === 'scanned_pdf' ? 'scanned_pdf' : 'written_text'
+                                      );
+                                    }}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-2xs ${
+                                      doc.docType === 'scanned_pdf'
+                                        ? 'bg-rose-600 hover:bg-rose-500 text-white'
+                                        : 'bg-sky-600 hover:bg-sky-500 text-white'
+                                    }`}
+                                    title={doc.docType === 'scanned_pdf' ? 'استعراض النسخة الممسوحة PDF' : 'استعراض النص الحرفي/المكتوب'}
+                                  >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    <span>{doc.docType === 'scanned_pdf' ? 'استعراض PDF' : 'استعراض النص'}</span>
+                                  </button>
 
-                              {matchedDecision && doc.docType === 'written_word' && (
-                                <button
-                                  type="button"
-                                  onClick={() => exportDecisionAsWord(matchedDecision)}
-                                  className="p-1 rounded text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/60 cursor-pointer"
-                                  title="تحميل Word"
-                                >
-                                  <FileDown className="w-3.5 h-3.5" />
-                                </button>
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      if (matchedDecision) {
+                                        if (doc.docType === 'scanned_pdf') {
+                                          const pdfRecord = await getPdfFromStorage(matchedDecision.id);
+                                          if (pdfRecord?.url) {
+                                            const link = document.createElement('a');
+                                            link.href = pdfRecord.url;
+                                            link.download = pdfRecord.filename || doc.filename;
+                                            link.click();
+                                          } else {
+                                            exportDecisionAsPdf(matchedDecision);
+                                          }
+                                        } else {
+                                          exportDecisionAsWord(matchedDecision);
+                                        }
+                                      }
+                                    }}
+                                    className="p-1.5 rounded-lg border border-stone-200 dark:border-zinc-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                                    title={`تنزيل ملف ${doc.docType === 'scanned_pdf' ? 'PDF' : 'Word'}`}
+                                  >
+                                    <FileDown className="w-3.5 h-3.5" />
+                                  </button>
+                                </>
                               )}
                             </div>
                           </td>
@@ -783,30 +883,69 @@ export const DocumentLibraryModal: React.FC<DocumentLibraryModalProps> = ({
                     </div>
 
                     {chapterDecisions.length > 0 && (
-                      <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         {chapterDecisions.map((dec) => (
                           <div
                             key={dec.id}
-                            className="p-2.5 rounded-lg bg-black/5 dark:bg-white/5 flex items-center justify-between gap-2"
+                            onClick={() => {
+                              onClose();
+                              onViewDecision(dec, 'summary');
+                            }}
+                            className={`p-3 rounded-xl border flex items-center justify-between gap-2.5 cursor-pointer transition-all hover:scale-[1.01] group shadow-2xs ${
+                              activeTheme.isDark
+                                ? 'bg-zinc-800/60 border-zinc-700/60 hover:border-amber-500/50 hover:bg-amber-500/10'
+                                : 'bg-stone-50 border-stone-200/80 hover:border-amber-500/50 hover:bg-amber-50/80'
+                            }`}
+                            title="انقر لاستعراض هذا القرار ومواده والنسخة الرسمية فوراً"
                           >
-                            <div className="space-y-0.5">
-                              <div className="font-bold">
-                                قرار رقم {dec.decisionNumber} لسنة {dec.year}
+                            <div className="space-y-1 flex-1 min-w-0">
+                              <div className="font-bold text-xs flex items-center gap-1.5 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                                <Eye className="w-3.5 h-3.5 text-amber-500 shrink-0 opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-transform" />
+                                <span className="truncate">قرار رقم {dec.decisionNumber} لسنة {dec.year}</span>
+                                <span className="text-[10px] opacity-75 font-normal shrink-0">
+                                  ({dec.legislationType || 'قرار وزاري'})
+                                </span>
                               </div>
-                              <div className="opacity-70 text-[11px] line-clamp-1">
+                              <div className="opacity-75 text-[11px] line-clamp-1 font-sans">
                                 {dec.title}
                               </div>
                             </div>
-                            <div className="flex items-center gap-1 shrink-0">
+                            <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onClose();
+                                  onViewDecision(dec, 'summary');
+                                }}
+                                className="px-2 py-1 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-stone-950 cursor-pointer flex items-center gap-1 shadow-2xs"
+                                title="استعراض القرار"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span>استعراض</span>
+                              </button>
+
                               {dec.pdfAttachment ? (
-                                <span className="text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold px-1.5 py-0.5 rounded">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    onClose();
+                                    onViewDecision(dec, 'scanned_pdf');
+                                  }}
+                                  className="text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold px-1.5 py-1 rounded-lg hover:bg-rose-200 cursor-pointer border border-rose-300/40"
+                                  title="استعراض النسخة الرسمية PDF"
+                                >
                                   PDF ✓
-                                </span>
-                              ) : (
-                                <span className="text-[10px] bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300 px-1.5 py-0.5 rounded">
-                                  PDF -
-                                </span>
-                              )}
+                                </button>
+                              ) : null}
+
+                              <button
+                                type="button"
+                                onClick={() => exportDecisionAsWord(dec)}
+                                className="text-[10px] bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 font-bold px-1.5 py-1 rounded-lg hover:bg-sky-200 cursor-pointer border border-sky-300/40"
+                                title="تحميل نسخة Word مكتوبة"
+                              >
+                                Word
+                              </button>
                             </div>
                           </div>
                         ))}

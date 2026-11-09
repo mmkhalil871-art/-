@@ -103,6 +103,15 @@ export interface MinisterialDecision {
   isFavorite?: boolean;
   notes?: string;
   pdfAttachment?: PdfAttachment;
+  wordAttachment?: {
+    filename: string;
+    size: number;
+    uploadedAt: string;
+    storageKey?: string;
+  };
+  originalUploadedContent?: string; // النص الحرفي الكامل المستخرج مباشرة من المستند المرفوع دون أي تعديل أو تأليف
+  sourceDocumentFilename?: string; // اسم ملف المستند الأصلي المرفوع
+  sourceDocumentType?: 'pdf' | 'docx' | 'doc' | 'txt';
   createdAt: string;
   updatedAt: string;
 }

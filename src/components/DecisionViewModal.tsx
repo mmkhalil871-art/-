@@ -21,7 +21,12 @@ import {
   Trash2,
   RefreshCw,
   Columns,
-  Plus
+  Plus,
+  Search,
+  CheckCircle2,
+  ChevronDown,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { MinisterialDecision } from '../types/decision';
 import {
@@ -40,6 +45,10 @@ import {
   parseArticlesString,
   generateLegalBasisSummary
 } from '../utils/lawArticlesHelper';
+import {
+  extractPreambleAndArticlesFromText,
+  extractDecisionNumberAndYear
+} from '../utils/decisionDocumentParser';
 
 import mammoth from 'mammoth';
 import { useUserAccess } from '../context/UserAccessContext';
@@ -68,6 +77,8 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
   onUpdateDecision,
 }) => {
   const { canEditTexts, canAddDocuments, canDelete, isSuperAdmin } = useUserAccess();
+  const [showDeleteModalConfirm, setShowDeleteModalConfirm] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [fontSize, setFontSize] = useState<number>(16);
   const [copiedFull, setCopiedFull] = useState(false);
   const [copiedArticleId, setCopiedArticleId] = useState<string | null>(null);
@@ -83,6 +94,31 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
   const [editTextOfficialReference, setEditTextOfficialReference] = useState(decision?.officialReference || '');
   const [textSaveSuccess, setTextSaveSuccess] = useState(false);
   const wordImportInputRef = useRef<HTMLInputElement>(null);
+
+  // Verbatim uploaded document view & search states
+  const [wordDisplayMode, setWordDisplayMode] = useState<'structured' | 'verbatim'>('structured');
+  const [verbatimSearchQuery, setVerbatimSearchQuery] = useState('');
+  const [copiedVerbatim, setCopiedVerbatim] = useState(false);
+
+  // Consolidated Header Menus
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [showAdminMenu, setShowAdminMenu] = useState(false);
+  const downloadMenuRef = useRef<HTMLDivElement>(null);
+  const adminMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (downloadMenuRef.current && !downloadMenuRef.current.contains(e.target as Node)) {
+        setShowDownloadMenu(false);
+      }
+      if (adminMenuRef.current && !adminMenuRef.current.contains(e.target as Node)) {
+        setShowAdminMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
 
   // Active Tab: 'scanned_pdf' | 'written_text' | 'summary' | 'split'
   const [activeTab, setActiveTab] = useState<DecisionModalTab>(
@@ -109,6 +145,13 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
       setEditTextExplanatoryNote(decision.explanatoryNote || '');
       setEditTextOfficialReference(decision.officialReference || '');
       setIsDirectEditingText(false);
+      setVerbatimSearchQuery('');
+      setShowDownloadMenu(false);
+      setShowAdminMenu(false);
+      // If decision has originalUploadedContent but no articles or only 1, prefer verbatim view
+      if (decision.originalUploadedContent && (!decision.articles || decision.articles.length <= 1)) {
+        setWordDisplayMode('verbatim');
+      }
     }
   }, [decision?.id]);
 
@@ -183,13 +226,40 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
     try {
       const arrayBuffer = await file.arrayBuffer();
       const res = await mammoth.extractRawText({ arrayBuffer });
-      const raw = res.value;
+      const raw = res.value || '';
       if (raw && raw.trim()) {
-        setEditTextPreamble((prev) =>
-          prev ? `${prev}\n\n[مستند Word مرفوع]:\n${raw.slice(0, 600)}` : raw.slice(0, 600)
-        );
-        setIsDirectEditingText(true);
+        const { preamble, articles } = extractPreambleAndArticlesFromText(raw, decision.id);
+        const { decisionNumber, year } = extractDecisionNumberAndYear(raw);
+
+        const updated: MinisterialDecision = {
+          ...decision,
+          decisionNumber: decisionNumber || decision.decisionNumber,
+          year: year || decision.year,
+          preamble: preamble || decision.preamble,
+          articles: articles.length > 0 ? articles : decision.articles,
+          originalUploadedContent: raw,
+          sourceDocumentFilename: file.name,
+          sourceDocumentType: 'docx',
+          wordAttachment: {
+            filename: file.name,
+            size: file.size,
+            uploadedAt: new Date().toISOString(),
+          },
+          updatedAt: new Date().toISOString(),
+        };
+
+        setEditTextNumber(updated.decisionNumber);
+        setEditTextYear(updated.year);
+        setEditTextPreamble(updated.preamble);
+        setEditTextArticles(updated.articles);
+
+        if (onUpdateDecision) {
+          onUpdateDecision(updated);
+        }
+        setTextSaveSuccess(true);
+        setTimeout(() => setTextSaveSuccess(false), 3000);
         setActiveTab('written_text');
+        setWordDisplayMode(articles.length > 0 ? 'structured' : 'verbatim');
       }
     } catch (err) {
       console.error('Error importing Word document:', err);
@@ -220,14 +290,24 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
 
     if (decision?.pdfAttachment) {
       setLoadingPdf(true);
-      getPdfFromStorage(decision.id).then((result) => {
+      const storageKey = decision.pdfAttachment.storageKey || decision.id;
+      getPdfFromStorage(storageKey).then((result) => {
         if (result && result.url) {
           currentObjectUrl = result.url;
           setPdfUrl(result.url);
+          setLoadingPdf(false);
         } else if (decision.pdfAttachment?.dataUrl) {
           setPdfUrl(decision.pdfAttachment.dataUrl);
+          setLoadingPdf(false);
+        } else {
+          getPdfFromStorage(decision.id).then((fallbackRes) => {
+            if (fallbackRes && fallbackRes.url) {
+              currentObjectUrl = fallbackRes.url;
+              setPdfUrl(fallbackRes.url);
+            }
+            setLoadingPdf(false);
+          });
         }
-        setLoadingPdf(false);
       });
     } else {
       setPdfUrl(null);
@@ -242,16 +322,23 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
 
   if (!decision) return null;
 
-  const handleCopyFull = async () => {
+  const handleCopyUnified = async () => {
+    if (!decision) return;
     try {
-      const text = formatDecisionTextForCopy(decision);
-      await navigator.clipboard.writeText(text);
+      if (wordDisplayMode === 'verbatim' && decision.originalUploadedContent) {
+        await navigator.clipboard.writeText(decision.originalUploadedContent);
+      } else {
+        const text = formatDecisionTextForCopy(decision);
+        await navigator.clipboard.writeText(text);
+      }
       setCopiedFull(true);
-      setTimeout(() => setCopiedFull(false), 2500);
+      setTimeout(() => setCopiedFull(false), 2000);
     } catch (err) {
       console.error('Failed to copy', err);
     }
   };
+
+  const handleCopyFull = handleCopyUnified;
 
   const handleCopyArticle = async (articleId: string, articleText: string) => {
     try {
@@ -300,15 +387,13 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
 
   const handleRemovePdf = async () => {
     if (!decision) return;
-    if (confirm('هل ترغب بإزالة النسخة الممسوحة ضوئياً المرفقة لهذا القرار؟')) {
-      const updated: MinisterialDecision = {
-        ...decision,
-        pdfAttachment: undefined,
-      };
-      setPdfUrl(null);
-      if (onUpdateDecision) {
-        onUpdateDecision(updated);
-      }
+    const updated: MinisterialDecision = {
+      ...decision,
+      pdfAttachment: undefined,
+    };
+    setPdfUrl(null);
+    if (onUpdateDecision) {
+      onUpdateDecision(updated);
     }
   };
 
@@ -350,17 +435,7 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
                   <span>تنزيل PDF</span>
                 </a>
               )}
-              {pdfUrl && (
-                <a
-                  href={pdfUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-stone-700 hover:bg-stone-600 text-stone-200 rounded-md transition-colors"
-                >
-                  <span>فتح بنافذة كاملة</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              )}
+
               <button
                 type="button"
                 onClick={() => uploadInputRef.current?.click()}
@@ -381,33 +456,6 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
             </div>
           </div>
 
-          {/* Quick Notice to Use Written Word for Easy Copying */}
-          <div className="bg-sky-950/80 border-b border-sky-800/80 px-4 py-2 flex items-center justify-between gap-3 text-xs font-cairo text-sky-200 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
-              <span>
-                💡 <strong>لتيسير النقل والاقتباس:</strong> تم إعداد النسخة المكتوبة الكاملة بصيغة Word لتتمكن من نسخ المواد دون الحاجة لإعادة كتابتها من الصورة الممسوحة.
-              </span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => exportDecisionAsWord(decision)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-md transition-colors cursor-pointer shadow-xs"
-              >
-                <FileDown className="w-3.5 h-3.5" />
-                <span>تحميل Word المكتوب</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('written_text')}
-                className="inline-flex items-center gap-1 text-sky-300 hover:text-white underline cursor-pointer"
-              >
-                <span>استعراض النص المكتوب</span>
-              </button>
-            </div>
-          </div>
-
           {/* PDF Viewer Iframe */}
           {pdfUrl ? (
             <iframe
@@ -416,8 +464,32 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
               className="w-full flex-1 border-0 bg-stone-900"
             />
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-stone-400">
-              <p className="text-sm">جاري تهيئة عارض ملف الـ PDF...</p>
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-stone-300 font-cairo space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto">
+                <FileCheck className="w-6 h-6" />
+              </div>
+              <div className="text-white font-bold text-sm">
+                الوثيقة الرسمية: {decision.pdfAttachment?.filename || 'نسخة رسمية مسجلة'}
+              </div>
+              <p className="text-xs text-stone-400 max-w-md leading-relaxed">
+                النسخة الممسوحة مسجلة ومعتمدة لدى ديوان الوزارة. يمكنك تنزيلها أو استعراض نصها المكتوب لتيسير النقل والاقتباس.
+              </p>
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => exportDecisionAsPdf(decision)}
+                  className="px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                >
+                  طباعة / تصدير PDF رسمياً
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('written_text')}
+                  className="px-3.5 py-2 bg-stone-700 hover:bg-stone-600 text-stone-200 rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                >
+                  استعراض النص المكتوب (Word)
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -456,21 +528,6 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
               <span>معاينة إلكترونية كـ PDF مؤقتاً</span>
             </button>
           </div>
-
-          <div className="bg-stone-800/80 border border-stone-700 rounded-xl p-3.5 text-xs text-stone-300 w-full text-right flex items-center justify-between gap-3 mt-4">
-            <div>
-              <div className="font-bold text-white text-xs">هل تبحث عن نص القرار للنقل والاقتباس؟</div>
-              <div className="text-[11px] text-stone-400 mt-0.5">النسخة المكتوبة الكاملة متوفرة بصيغة Word وجاهزة للتحميل الفوري.</div>
-            </div>
-            <button
-              type="button"
-              onClick={() => exportDecisionAsWord(decision)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer shrink-0"
-            >
-              <FileDown className="w-3.5 h-3.5" />
-              <span>تحميل Word</span>
-            </button>
-          </div>
         </div>
       )}
     </div>
@@ -480,69 +537,114 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
   const renderWrittenWordView = (compact = false) => (
     <div className={`flex-1 overflow-y-auto p-4 sm:p-8 md:p-10 bg-white print-document font-cairo`}>
       <div className="max-w-3xl mx-auto space-y-6">
-        {/* Banner highlighting Word Written Copy for Easy Quoting & Copying */}
-        <div className="no-print bg-gradient-to-r from-sky-50 via-sky-100/60 to-stone-50 border-2 border-sky-300/80 rounded-2xl p-4 sm:p-5 shadow-xs">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-200 text-sky-900 font-mono">
-                  نسخة مكتوبة ومدققة
-                </span>
-                <span className="text-xs font-semibold text-sky-900">
-                  مهيأة لتيسير النقل والاقتباس وصياغة المذكرات
-                </span>
-              </div>
-              <p className="text-xs text-stone-600">
-                يمكنك تحميل هذا القرار بصيغة Word (.doc) أو نسخ أي مادة بضغطة زر واحدة.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0 flex-wrap">
-              {canEditTexts && (
+        {/* Document Reading Sub-bar: Clean, uncluttered, and focused */}
+        <div className="no-print bg-stone-100/90 border border-stone-200/90 rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+          {/* Sub-view switcher: Structured Articles vs Verbatim Document */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {decision.originalUploadedContent ? (
+              <div className="inline-flex rounded-lg bg-white border border-stone-300 p-0.5 text-xs font-bold shadow-2xs">
                 <button
                   type="button"
-                  onClick={() => setIsDirectEditingText(!isDirectEditingText)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 font-bold rounded-xl text-xs transition-colors shadow-xs cursor-pointer ${
-                    isDirectEditingText
-                      ? 'bg-amber-600 hover:bg-amber-500 text-white animate-pulse'
-                      : 'bg-emerald-700 hover:bg-emerald-600 text-white'
+                  onClick={() => setWordDisplayMode('structured')}
+                  className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                    wordDisplayMode === 'structured'
+                      ? 'bg-stone-900 text-white shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
                   }`}
-                  title="تعديل نصوص القرار مباشرة (الديباجة، المواد، المذكرة، العنوان)"
                 >
-                  <Edit3 className="w-4 h-4" />
-                  <span>{isDirectEditingText ? 'إلغاء وضع التحرير' : 'تحرير النصوص المباشر ✍️'}</span>
+                  المواد المفهرسة ({decision.articles.length})
                 </button>
-              )}
+                <button
+                  type="button"
+                  onClick={() => setWordDisplayMode('verbatim')}
+                  className={`px-3 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                    wordDisplayMode === 'verbatim'
+                      ? 'bg-amber-500 text-stone-950 font-bold shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  <span>النص الحرفي للأصل 📜</span>
+                </button>
+              </div>
+            ) : (
+              <span className="text-stone-700 font-semibold text-xs flex items-center gap-1.5">
+                <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>المواد المعتمدة ({decision.articles.length} مادة)</span>
+              </span>
+            )}
 
-              <button
-                type="button"
-                onClick={() => exportDecisionAsWord(decision)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition-colors shadow-xs cursor-pointer"
-                title="تحميل النسخة المكتوبة Word (.doc)"
-              >
-                <FileDown className="w-4 h-4" />
-                <span>تحميل النسخة المكتوبة (Word)</span>
-              </button>
+            {/* Document source indicator */}
+            <span className="text-[11px] text-stone-500 font-mono hidden sm:inline">
+              {decision.sourceDocumentFilename || decision.wordAttachment?.filename || 'مستند التشريع الأصلي'}
+            </span>
+          </div>
 
-              <button
-                type="button"
-                onClick={handleCopyFull}
-                className="inline-flex items-center gap-1 px-3 py-2 bg-white hover:bg-stone-50 text-stone-700 border border-stone-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-                title="نسخ نص القرار كاملاً"
-              >
-                {copiedFull ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-emerald-700 font-bold">تم نسخ النص كاملاً</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-stone-600" />
-                    <span>نسخ نص القرار كاملاً</span>
-                  </>
+          {/* Reading tools: Search in verbatim, Font Zoom, and Single Unified Copy Button */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {wordDisplayMode === 'verbatim' && decision.originalUploadedContent && (
+              <div className="flex items-center gap-1 bg-white border border-stone-300 rounded-lg px-2 py-0.5 text-xs">
+                <Search className="w-3.5 h-3.5 text-stone-400" />
+                <input
+                  type="text"
+                  value={verbatimSearchQuery}
+                  onChange={(e) => setVerbatimSearchQuery(e.target.value)}
+                  placeholder="بحث في النص..."
+                  className="w-28 sm:w-36 text-xs bg-transparent focus:outline-hidden"
+                />
+                {verbatimSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setVerbatimSearchQuery('')}
+                    className="text-stone-400 hover:text-stone-600 px-0.5 text-[10px] cursor-pointer"
+                  >
+                    ✕
+                  </button>
                 )}
+              </div>
+            )}
+
+            {/* Font Zoom Controls */}
+            <div className="flex items-center bg-white rounded-lg border border-stone-300 p-0.5">
+              <button
+                type="button"
+                onClick={() => setFontSize((s) => Math.max(s - 1, 13))}
+                className="p-1 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded transition-colors cursor-pointer"
+                title="تصغير الخط"
+              >
+                <ZoomOut className="w-3 h-3" />
+              </button>
+              <span className="px-1.5 text-[11px] font-mono tabular-nums text-stone-600">
+                {fontSize}
+              </span>
+              <button
+                type="button"
+                onClick={() => setFontSize((s) => Math.min(s + 1, 24))}
+                className="p-1 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded transition-colors cursor-pointer"
+                title="تكبير الخط"
+              >
+                <ZoomIn className="w-3 h-3" />
               </button>
             </div>
+
+            {/* Single Unified Copy Button */}
+            <button
+              type="button"
+              onClick={handleCopyUnified}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-white hover:bg-stone-50 border border-stone-300 text-stone-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
+              title="نسخ نص القرار كاملاً"
+            >
+              {copiedFull ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-emerald-700 font-bold">تم النسخ</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5 text-stone-600" />
+                  <span>نسخ النص</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
@@ -711,6 +813,32 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
               </button>
             </div>
           </div>
+        ) : wordDisplayMode === 'verbatim' && decision.originalUploadedContent ? (
+          <div className="space-y-4">
+            {/* Verbatim Content Box */}
+            <div
+              className="p-6 sm:p-8 bg-white border border-stone-200 rounded-2xl shadow-xs text-stone-900 leading-relaxed font-serif whitespace-pre-wrap selection:bg-amber-200 text-justify"
+              style={{ fontSize: `${fontSize}px` }}
+            >
+              {verbatimSearchQuery.trim() ? (
+                decision.originalUploadedContent
+                  .split(
+                    new RegExp(`(${verbatimSearchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+                  )
+                  .map((chunk, i) =>
+                    chunk.toLowerCase() === verbatimSearchQuery.trim().toLowerCase() ? (
+                      <mark key={i} className="bg-amber-300 text-stone-950 font-bold px-0.5 rounded">
+                        {chunk}
+                      </mark>
+                    ) : (
+                      chunk
+                    )
+                  )
+              ) : (
+                decision.originalUploadedContent
+              )}
+            </div>
+          </div>
         ) : (
           <>
             {/* Ministry Letterhead */}
@@ -862,9 +990,15 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-950/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6">
       {/* Modal Container */}
-      <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] flex flex-col border border-stone-200 overflow-hidden relative print-container">
+      <div
+        className={`bg-white shadow-[0_25px_70px_-15px_rgba(0,0,0,0.5)] w-full flex flex-col border border-stone-200 overflow-hidden relative print-container specular-border-t transition-all duration-200 ${
+          isMaximized
+            ? 'fixed inset-0 max-w-none max-h-none h-screen rounded-none z-50'
+            : 'rounded-2xl max-w-6xl max-h-[95vh]'
+        }`}
+      >
         {/* Top Control Bar (Hidden in Print) */}
         <div className="bg-stone-900 text-stone-100 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 border-b border-stone-800 no-print shrink-0 flex-wrap">
           <div className="flex items-center gap-3">
@@ -886,25 +1020,8 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
             </div>
           </div>
 
-          {/* Tab Switcher: Scanned PDF vs Written Word vs Summary vs Split */}
+          {/* Tab Switcher: Written Word vs Scanned PDF vs Summary vs Split */}
           <div className="flex items-center bg-stone-800 p-0.5 rounded-lg border border-stone-700 text-xs overflow-x-auto max-w-full">
-            {/* Scanned Official PDF */}
-            <button
-              type="button"
-              onClick={() => setActiveTab('scanned_pdf')}
-              className={`px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-                activeTab === 'scanned_pdf'
-                  ? 'bg-rose-600 text-white shadow-xs'
-                  : 'text-stone-300 hover:text-white'
-              }`}
-            >
-              <FileDown className="w-3.5 h-3.5 text-rose-300" />
-              <span>النسخة الرسمية الممسوحة ضوئياً (PDF)</span>
-              {decision.pdfAttachment && (
-                <span className="w-2 h-2 rounded-full bg-emerald-400" title="مرفقة ومحفوظة" />
-              )}
-            </button>
-
             {/* Written Word Copy */}
             <button
               type="button"
@@ -916,8 +1033,45 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
               }`}
             >
               <FileText className="w-3.5 h-3.5 text-sky-300" />
-              <span>النسخة المكتوبة (Word) لتيسير النقل</span>
+              <span>نص القرار (Word)</span>
             </button>
+
+            {/* Scanned Official PDF - Direct Full Window Preview */}
+            {pdfUrl ? (
+              <a
+                href={pdfUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setActiveTab('scanned_pdf')}
+                className={`px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                  activeTab === 'scanned_pdf'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'text-stone-300 hover:text-white hover:bg-stone-700/60'
+                }`}
+                title="استعراض الوثيقة الرسمية مباشرة في نافذة كاملة مستقلة (PDF)"
+              >
+                <FileDown className="w-3.5 h-3.5 text-rose-300" />
+                <span>النسخة الممسوحة (PDF)</span>
+                <ExternalLink className="w-3 h-3 text-rose-200 opacity-90" />
+                {decision.pdfAttachment && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" title="مرفقة ومحفوظة" />
+                )}
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setActiveTab('scanned_pdf')}
+                className={`px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                  activeTab === 'scanned_pdf'
+                    ? 'bg-rose-600 text-white shadow-xs'
+                    : 'text-stone-300 hover:text-white'
+                }`}
+                title="عرض النسخة الممسوحة ضوئياً"
+              >
+                <FileDown className="w-3.5 h-3.5 text-rose-300" />
+                <span>النسخة الممسوحة (PDF)</span>
+              </button>
+            )}
 
             {/* Summary */}
             <button
@@ -930,7 +1084,7 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>ملخص أحكام القرار</span>
+              <span>الملخص والسند</span>
             </button>
 
             {/* Split Comparison */}
@@ -945,7 +1099,7 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
               title="عرض مقارن بين النسخة الممسوحة ضوئياً والنسخة المكتوبة"
             >
               <Columns className="w-3.5 h-3.5 text-emerald-300" />
-              <span>عرض المقارنة</span>
+              <span>المقارنة</span>
             </button>
 
             <input
@@ -955,55 +1109,90 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
               onChange={handleQuickUploadPdf}
               className="hidden"
             />
+            <input
+              type="file"
+              ref={wordImportInputRef}
+              accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              onChange={handleWordDocxImport}
+              className="hidden"
+            />
           </div>
 
-          {/* Action Toolbar */}
+          {/* Consolidated Action Toolbar (Zero duplicates) */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Font size adjustments (in written text mode) */}
-            {activeTab === 'written_text' && (
-              <div className="hidden sm:flex items-center bg-stone-800 rounded-lg p-0.5 border border-stone-700">
-                <button
-                  type="button"
-                  onClick={() => setFontSize((s) => Math.max(s - 2, 13))}
-                  className="p-1.5 text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors cursor-pointer"
-                  title="تصغير الخط"
-                >
-                  <ZoomOut className="w-3.5 h-3.5" />
-                </button>
-                <span className="px-2 text-xs font-mono tabular-nums text-stone-300">
-                  {fontSize}px
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setFontSize((s) => Math.min(s + 2, 24))}
-                  className="p-1.5 text-stone-300 hover:text-white hover:bg-stone-700 rounded transition-colors cursor-pointer"
-                  title="تكبير الخط"
-                >
-                  <ZoomIn className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
+            {/* Unified Download Menu */}
+            <div className="relative" ref={downloadMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-stone-800 hover:bg-stone-750 text-stone-200 border border-stone-700 font-semibold rounded-lg text-xs transition-colors cursor-pointer shadow-xs"
+                title="تنزيل المستند بصيغ مختلفة"
+              >
+                <Download className="w-3.5 h-3.5 text-amber-400" />
+                <span>تنزيل</span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
 
-            {/* Word Download */}
-            <button
-              type="button"
-              onClick={() => exportDecisionAsWord(decision)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-950/90 hover:bg-sky-900 text-sky-200 border border-sky-600/70 font-semibold rounded-lg text-xs transition-colors cursor-pointer shadow-xs"
-              title="تحميل النسخة المكتوبة بصيغة Word (.doc) لتيسير النقل منها"
-            >
-              <FileDown className="w-3.5 h-3.5 text-sky-400" />
-              <span>تحميل Word</span>
-            </button>
+              {showDownloadMenu && (
+                <div className="absolute left-0 mt-1.5 w-52 rounded-xl bg-stone-900 border border-stone-700 shadow-2xl p-1.5 z-30 text-xs font-cairo">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      exportDecisionAsWord(decision);
+                      setShowDownloadMenu(false);
+                    }}
+                    className="w-full text-right px-2.5 py-2 rounded-lg hover:bg-stone-800 text-stone-200 flex items-center gap-2 cursor-pointer"
+                  >
+                    <FileDown className="w-4 h-4 text-sky-400 shrink-0" />
+                    <div>
+                      <div className="font-bold">مستند Word (.doc)</div>
+                      <div className="text-[10px] text-stone-400">مهيأ للنقل وصياغة المذكرات</div>
+                    </div>
+                  </button>
 
-            {/* Print button */}
+                  {decision.pdfAttachment && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportDecisionAsPdf(decision);
+                        setShowDownloadMenu(false);
+                      }}
+                      className="w-full text-right px-2.5 py-2 rounded-lg hover:bg-stone-800 text-stone-200 flex items-center gap-2 cursor-pointer"
+                    >
+                      <FileCheck className="w-4 h-4 text-rose-400 shrink-0" />
+                      <div>
+                        <div className="font-bold">النسخة الرسمية (PDF)</div>
+                        <div className="text-[10px] text-stone-400">الوقائع المصرية / الجريدة</div>
+                      </div>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      exportDecisionAsText(decision);
+                      setShowDownloadMenu(false);
+                    }}
+                    className="w-full text-right px-2.5 py-2 rounded-lg hover:bg-stone-800 text-stone-200 flex items-center gap-2 cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <div>
+                      <div className="font-bold">ملف نصي (.txt)</div>
+                      <div className="text-[10px] text-stone-400">نص نقي بدون تنسيق</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Print */}
             <button
               type="button"
               onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold rounded-lg text-xs transition-colors shadow-xs cursor-pointer"
+              className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 rounded-lg text-xs transition-colors cursor-pointer"
               title="طباعة القرار رسمياً"
             >
               <Printer className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">طباعة</span>
             </button>
 
             {/* Favorite */}
@@ -1014,13 +1203,13 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
               title={decision.isFavorite ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'}
             >
               <Star
-                className={`w-4 h-4 ${
+                className={`w-3.5 h-3.5 ${
                   decision.isFavorite ? 'fill-amber-400 text-amber-400' : ''
                 }`}
               />
             </button>
 
-            {/* Direct Text Editing Mode Toggle */}
+            {/* Direct Text Editing Toggle for Authorized Users */}
             {canEditTexts && (
               <button
                 type="button"
@@ -1031,94 +1220,139 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
                   isDirectEditingText
                     ? 'bg-amber-500 text-stone-950 border-amber-400 shadow-sm'
-                    : 'bg-amber-950/80 text-amber-300 border-amber-500/40 hover:bg-amber-900/90'
+                    : 'bg-stone-800 hover:bg-stone-700 text-stone-200 border-stone-700'
                 }`}
                 title="تعديل نصوص القرار مباشرة (الديباجة، المواد، العناوين)"
               >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>{isDirectEditingText ? 'إنهاء التحرير' : 'تحرير النصوص ✍️'}</span>
+                <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                <span>{isDirectEditingText ? 'إنهاء التحرير' : 'تحرير النصوص'}</span>
               </button>
             )}
 
-            {/* Quick Upload Official PDF */}
-            {canAddDocuments && (
-              <button
-                type="button"
-                onClick={() => uploadInputRef.current?.click()}
-                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-600/70 font-semibold rounded-lg text-xs transition-colors cursor-pointer shadow-xs"
-                title="رفع أو استبدال النسخة الرسمية الممسوحة ضوئياً (PDF)"
-              >
-                <FileUp className="w-3.5 h-3.5 text-rose-400" />
-                <span>رفع PDF 📤</span>
-              </button>
-            )}
-
-            {/* Quick Word Import */}
-            {canAddDocuments && (
-              <>
+            {/* Admin Management Dropdown (Document upload, Full Form Edit, Delete) */}
+            {(canAddDocuments || canEditTexts || (canDelete && onDelete)) && (
+              <div className="relative" ref={adminMenuRef}>
                 <button
                   type="button"
-                  onClick={() => wordImportInputRef.current?.click()}
-                  className="hidden md:inline-flex items-center gap-1 px-2.5 py-1.5 bg-sky-950/80 hover:bg-sky-900 text-sky-200 border border-sky-600/70 font-semibold rounded-lg text-xs transition-colors cursor-pointer shadow-xs"
-                  title="استيراد وتفريغ نصوص من ملف وورد (.docx)"
+                  onClick={() => setShowAdminMenu(!showAdminMenu)}
+                  className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700 rounded-lg text-xs transition-colors cursor-pointer"
+                  title="خيارات إدارية متقدمة"
                 >
-                  <FileText className="w-3.5 h-3.5 text-sky-400" />
-                  <span>استيراد Word</span>
+                  <ChevronDown className="w-3.5 h-3.5" />
                 </button>
-                <input
-                  type="file"
-                  ref={wordImportInputRef}
-                  accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  onChange={handleWordDocxImport}
-                  className="hidden"
-                />
-              </>
+
+                {showAdminMenu && (
+                  <div className="absolute left-0 mt-1.5 w-52 rounded-xl bg-stone-900 border border-stone-700 shadow-2xl p-1.5 z-30 text-xs font-cairo">
+                    {canAddDocuments && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            uploadInputRef.current?.click();
+                            setShowAdminMenu(false);
+                          }}
+                          className="w-full text-right px-2.5 py-2 rounded-lg hover:bg-stone-800 text-stone-200 flex items-center gap-2 cursor-pointer"
+                        >
+                          <FileUp className="w-4 h-4 text-rose-400 shrink-0" />
+                          <span>رفع / استبدال PDF رسمي</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            wordImportInputRef.current?.click();
+                            setShowAdminMenu(false);
+                          }}
+                          className="w-full text-right px-2.5 py-2 rounded-lg hover:bg-stone-800 text-stone-200 flex items-center gap-2 cursor-pointer"
+                        >
+                          <FileText className="w-4 h-4 text-sky-400 shrink-0" />
+                          <span>استيراد ملف Word (.docx)</span>
+                        </button>
+                      </>
+                    )}
+
+                    {canEditTexts && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAdminMenu(false);
+                          onClose();
+                          onEdit(decision);
+                        }}
+                        className="w-full text-right px-2.5 py-2 rounded-lg hover:bg-stone-800 text-stone-200 flex items-center gap-2 cursor-pointer"
+                      >
+                        <Edit3 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>تعديل بطاقة القرار الكاملة</span>
+                      </button>
+                    )}
+
+                    {canDelete && onDelete && (
+                      <>
+                        <div className="border-t border-stone-800 my-1" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAdminMenu(false);
+                            setShowDeleteModalConfirm(true);
+                          }}
+                          className="w-full text-right px-2.5 py-2 rounded-lg hover:bg-rose-950/60 text-rose-400 flex items-center gap-2 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4 shrink-0" />
+                          <span>حذف هذا القرار</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
-            {/* Edit Full Form */}
-            {canEditTexts && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onEdit(decision);
-                }}
-                className="p-1.5 text-stone-300 hover:text-white hover:bg-stone-800 rounded-lg transition-colors cursor-pointer border border-stone-700"
-                title="تعديل تفاصيل القرار واستمارته بالكامل"
-              >
-                <Edit3 className="w-4 h-4" />
-              </button>
-            )}
-
-            {/* Delete Decision */}
-            {canDelete && onDelete && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (
-                    confirm(
-                      `هل أنت متأكد من حذف القرار الوزاري رقم (${decision.decisionNumber}) لسنة ${decision.year} نهائياً؟`
-                    )
-                  ) {
-                    onDelete(decision.id);
+            {/* Inline Confirmation when Deleting */}
+            {showDeleteModalConfirm && (
+              <div className="flex items-center gap-1.5 bg-rose-950/90 border border-rose-600/80 px-2 py-1 rounded-lg text-xs">
+                <span className="text-rose-200 text-[11px] font-bold">تأكيد الحذف؟</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onDelete) onDelete(decision.id);
                     onClose();
-                  }
-                }}
-                className="p-1.5 text-rose-400 hover:text-white hover:bg-rose-900/60 rounded-lg transition-colors cursor-pointer border border-rose-700/60"
-                title="حذف هذا القرار نهائياً من المنظومة (صلاحية الحذف)"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+                  }}
+                  className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white rounded text-[11px] font-bold cursor-pointer"
+                >
+                  حذف
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModalConfirm(false)}
+                  className="px-1.5 py-0.5 text-stone-300 hover:text-white text-[11px] cursor-pointer"
+                >
+                  إلغاء
+                </button>
+              </div>
             )}
+
+            {/* Maximize / Restore Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsMaximized(!isMaximized)}
+              className="p-1.5 text-stone-400 hover:text-white hover:bg-stone-800 rounded-lg transition-colors cursor-pointer mr-1"
+              title={isMaximized ? 'استعادة الحجم الطبيعي' : 'تكبير ملء الشاشة'}
+            >
+              {isMaximized ? (
+                <Minimize2 className="w-4 h-4 text-amber-300" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </button>
 
             {/* Close */}
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 text-stone-400 hover:text-white hover:bg-stone-800 rounded-lg transition-colors cursor-pointer ml-1"
-              title="إغلاق"
+              className="p-1.5 text-stone-400 hover:text-white hover:bg-stone-800 rounded-lg transition-colors cursor-pointer mr-1"
+              title="إغلاق النافذة"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -1178,38 +1412,6 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
                     <p className="text-xs text-stone-600">
                       الصادر عن {decision.issuingAuthority} - تنفيذاً لأحكام قانون العمل رقم 14 لسنة 2025
                     </p>
-                  </div>
-
-                  {/* Scanned PDF & Written Word Fast Action Buttons */}
-                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-stone-100">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('scanned_pdf')}
-                      className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-white font-bold rounded-xl text-xs transition-colors shadow-xs cursor-pointer ${
-                        decision.pdfAttachment ? 'bg-rose-600 hover:bg-rose-500' : 'bg-stone-800 hover:bg-stone-700'
-                      }`}
-                    >
-                      <FileDown className="w-4 h-4 text-rose-200" />
-                      <span>{decision.pdfAttachment ? 'استعراض النسخة الممسوحة (PDF)' : 'رفع النسخة الممسوحة (PDF)'}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => exportDecisionAsWord(decision)}
-                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
-                      title="تحميل النسخة المكتوبة Word (.doc) لتيسير النقل"
-                    >
-                      <FileDown className="w-4 h-4" />
-                      <span>تحميل Word المكتوب</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('written_text')}
-                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-                    >
-                      <span>استعراض النص</span>
-                    </button>
                   </div>
                 </div>
               </div>

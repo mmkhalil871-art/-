@@ -319,7 +319,7 @@ function MainDashboard() {
       {/* Hero Strip with Institutional Notice */}
       {/* Executive Hero Section */}
       <section
-        className="py-8 px-4 sm:px-6 lg:px-8 border-b border-black/15 dark:border-white/10 no-print transition-colors duration-200"
+        className="relative py-8 sm:py-10 lg:py-12 border-b border-black/15 dark:border-white/10 no-print transition-colors duration-200 overflow-hidden specular-border-t"
         style={{
           backgroundColor: 'var(--theme-header-bg)',
           color:
@@ -330,41 +330,57 @@ function MainDashboard() {
               : '#ffffff',
         }}
       >
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2.5 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-xs border border-white/15">
-              <Scale className="w-3.5 h-3.5" style={{ color: activeAccent.colorHex }} />
-              <span className="text-white/90">جمهورية مصر العربية · المنظومة التشريعية الرسمية</span>
+        {/* Subtle Ambient Background Glow for Eye Comfort */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-45 mix-blend-screen"
+          style={{
+            background: `radial-gradient(ellipse 70% 60% at 50% -10%, ${activeAccent.colorHex}40 0%, transparent 75%)`,
+          }}
+        />
+
+        {/* Delicate Arabesque Geometric Lattice Pattern */}
+        <div className="absolute inset-0 bg-arabic-lattice opacity-35 pointer-events-none" />
+
+        {/* Large Decorative Legal Scale Watermark Crest */}
+        <div className="absolute -left-10 -bottom-20 pointer-events-none opacity-[0.045] text-white">
+          <Scale className="w-96 h-96 transform -rotate-12" strokeWidth={1} />
+        </div>
+
+        <div className="relative w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs text-amber-300 font-semibold shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span>المرجع الوطني المعتمد · جمهورية مصر العربية</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-[2.2rem] font-extrabold tracking-tight text-white leading-tight">
               قاعدة القرارات واللوائح المنفذة لقانون العمل
             </h1>
-            <p className="text-xs sm:text-sm text-white/80 leading-relaxed max-w-2xl">
+            <p className="text-xs sm:text-sm text-white/80 leading-relaxed max-w-2xl font-sans">
               مرجع قانوني رقمي موثق بالنسخ الممسوحة ضوئياً (PDF) والنصوص المكتوبة (Word) لتيسير
-              النقل والاقتباس وصياغة المذكرات، مع إمكانية رفع المستندات وتنظيمها آلياً.
+              النقل والاقتباس وصياغة المذكرات، مع إمكانية رفع المستندات وتنظيمها آلياً على مدار ساعات العمل الطويلة.
             </p>
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-            {/* Primary Add Legislation */}
+            {/* Primary Add Legislation with Shimmer */}
             <button
               type="button"
               onClick={() => {
                 setEditingDecision(null);
                 setIsFormOpen(true);
               }}
-              className="inline-flex items-center gap-2 px-4.5 py-2.5 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] cursor-pointer"
+              className="btn-shimmer inline-flex items-center justify-center gap-2 px-4.5 py-2.5 min-h-[44px] text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
               style={{ backgroundColor: activeAccent.colorHex }}
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>إضافة تشريع جديد</span>
             </button>
 
-            {/* Smart Document Library & Ingestion Button */}
+            {/* Smart Document Library & Ingestion Button with Shimmer */}
             <button
               type="button"
               onClick={() => setIsDocumentLibraryOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] cursor-pointer border border-emerald-400/30"
+              className="btn-shimmer inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer border border-emerald-400/30"
               title="رفع مستندات القرارات وتنظيمها نيابة عنك"
             >
               <FolderOpen className="w-4 h-4 text-emerald-200" />
@@ -375,7 +391,7 @@ function MainDashboard() {
             <button
               type="button"
               onClick={() => setIsApkModalOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] cursor-pointer border border-sky-400/30"
+              className="btn-shimmer inline-flex items-center justify-center gap-2 px-3.5 py-2.5 min-h-[44px] bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer border border-sky-400/30"
               title="تثبيت تطبيق أندرويد APK للهاتف المحمول"
             >
               <Smartphone className="w-4 h-4 text-sky-200" />
@@ -386,7 +402,7 @@ function MainDashboard() {
             <button
               type="button"
               onClick={() => setIsInstallModalOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 bg-white/10 hover:bg-white/15 text-white/90 hover:text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer border border-white/15"
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 min-h-[44px] bg-white/10 hover:bg-white/15 text-white/90 hover:text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer border border-white/15 backdrop-blur-xs"
               title="خيارات تشغيل المنظومة كبرنامج حاسب آلي بدون إنترنت"
             >
               <WifiOff className="w-4 h-4" />
@@ -401,7 +417,7 @@ function MainDashboard() {
 
       {/* Unified Executive System Status Ribbon (Minimalist & Clean) */}
       <div
-        className={`border-b px-4 sm:px-6 lg:px-8 py-2 text-xs no-print transition-colors ${
+        className={`border-b py-2 text-xs no-print transition-colors ${
           activeTheme.isDark
             ? 'bg-zinc-900/70 border-zinc-800 text-zinc-300'
             : activeTheme.id === 'parchment'
@@ -409,7 +425,7 @@ function MainDashboard() {
             : 'bg-stone-100/90 border-stone-200/90 text-stone-700'
         }`}
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+        <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 flex items-center justify-between gap-4 flex-wrap">
           {/* Admin User Status */}
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
@@ -463,7 +479,7 @@ function MainDashboard() {
       />
 
       {/* Main Content Area */}
-      <main id="decisions-catalog" className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full no-print">
+      <main id="decisions-catalog" className="flex-1 w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-8 no-print pb-safe">
         {/* Featured Labor Law 14 Banner with Direct Word & PDF Downloads */}
         <LaborLawBanner
           currentLaw={currentLaw}
@@ -488,7 +504,7 @@ function MainDashboard() {
             <h3 className="text-base sm:text-lg font-bold mb-1.5">
               تم حذف كافة القرارات التي لا يوجد لها مستند PDF نسخة رسمية
             </h3>
-            <p className="text-xs opacity-80 mb-5 leading-relaxed max-w-md mx-auto">
+            <p className="text-xs opacity-80 mb-5 leading-relaxed max-w-md mx-auto font-sans">
               تم تطبيق قاعدة الحصر والتوثيق الرسمي: أصبحت مكتبة القرارات مقتصرة حصراً على القرارات الموثقة المرفق بها نسخة رسمية ممسوحة ضوئياً (PDF).
               يمكنك الآن رفع مستندات القرارات وسيتولى المحرك الذكي تنظيمها وتصنيفها وربطها بمواد قانون العمل 14 تلقائياً.
             </p>
@@ -496,7 +512,7 @@ function MainDashboard() {
               <button
                 type="button"
                 onClick={() => setIsDocumentLibraryOpen(true)}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-2"
+                className="px-5 py-2.5 min-h-[44px] bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-2"
               >
                 <FolderOpen className="w-4 h-4" />
                 <span>فتح مكتبة المستندات ورفع النسخ الرسمية (PDF) 📁</span>
@@ -507,7 +523,7 @@ function MainDashboard() {
                   setEditingDecision(null);
                   setIsFormOpen(true);
                 }}
-                className="px-4 py-2.5 bg-black/5 dark:bg-white/10 hover:opacity-100 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                className="px-4 py-2.5 min-h-[44px] bg-black/5 dark:bg-white/10 hover:opacity-100 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
               >
                 + إضافة تشريع جديد مع إرفاق PDF
               </button>
@@ -515,7 +531,7 @@ function MainDashboard() {
           </div>
         ) : effectiveMode === 'mobile' ? (
           <div className="space-y-3.5 pb-20 max-w-2xl mx-auto">
-            <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-xs">
+            <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-xs">
               <span className="font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
                 <Smartphone className="w-4 h-4 text-emerald-500" />
                 <span>النسخة الميسرة للموبايل ({filteredDecisions.length} تشريع)</span>
@@ -523,7 +539,7 @@ function MainDashboard() {
               <button
                 type="button"
                 onClick={toggleMode}
-                className="text-sky-600 dark:text-sky-400 font-bold hover:underline cursor-pointer flex items-center gap-1"
+                className="text-sky-600 dark:text-sky-400 font-bold hover:underline cursor-pointer flex items-center gap-1 py-1"
               >
                 <span>التبديل لعرض الحاسب والتابلت</span>
               </button>
@@ -544,7 +560,7 @@ function MainDashboard() {
             ))}
           </div>
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5 lg:gap-6">
             {filteredDecisions.map((decision) => (
               <DecisionCard
                 key={decision.id}
@@ -579,7 +595,7 @@ function MainDashboard() {
 
       {/* Footer */}
       <footer
-        className={`border-t py-8 px-4 sm:px-6 lg:px-8 text-xs no-print transition-colors duration-200 ${
+        className={`border-t py-8 text-xs no-print transition-colors duration-200 pb-safe ${
           activeTheme.isDark
             ? 'bg-zinc-950 text-zinc-400 border-zinc-850'
             : activeTheme.id === 'navy'
@@ -591,7 +607,7 @@ function MainDashboard() {
             : 'bg-stone-900 text-stone-400 border-stone-800'
         }`}
       >
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Scale className="w-4 h-4" style={{ color: activeAccent.colorHex }} />
             <span className="font-semibold text-white/90">
@@ -603,7 +619,7 @@ function MainDashboard() {
             <button
               type="button"
               onClick={() => setIsDocumentLibraryOpen(true)}
-              className="hover:underline flex items-center gap-1 cursor-pointer text-emerald-400"
+              className="hover:underline flex items-center gap-1 cursor-pointer text-emerald-400 py-1"
             >
               <FolderOpen className="w-3.5 h-3.5" />
               <span>مكتبة المستندات</span>
@@ -611,7 +627,7 @@ function MainDashboard() {
             <button
               type="button"
               onClick={() => setIsThemeModalOpen(true)}
-              className="hover:underline flex items-center gap-1 cursor-pointer"
+              className="hover:underline flex items-center gap-1 cursor-pointer py-1"
               style={{ color: activeAccent.colorHex }}
             >
               <Palette className="w-3.5 h-3.5" />

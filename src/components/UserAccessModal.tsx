@@ -154,11 +154,9 @@ export const UserAccessModal: React.FC<UserAccessModalProps> = ({
       onShowToast('لا يمكن حذف حساب المسؤول العام الرئيسي.');
       return;
     }
-    if (confirm(`هل أنت متأكد من حذف المستخدم (${user.name}) نهائياً من المنظومة؟`)) {
-      const ok = deleteUser(user.id);
-      if (ok) {
-        onShowToast(`تم حذف المستخدم (${user.name}) بنجاح.`);
-      }
+    const ok = deleteUser(user.id);
+    if (ok) {
+      onShowToast(`تم حذف المستخدم (${user.name}) بنجاح.`);
     }
   };
 
@@ -798,11 +796,9 @@ export const UserAccessModal: React.FC<UserAccessModalProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    if (confirm('هل تريد استعادة الضبط الافتراضي للمستخدمين والصلاحيات؟')) {
-                      resetSystemUsersToDefault();
-                      refreshUsers();
-                      onShowToast('تمت استعادة الضبط الافتراضي للمستخدمين بنجاح.');
-                    }
+                    resetSystemUsersToDefault();
+                    refreshUsers();
+                    onShowToast('تمت استعادة الضبط الافتراضي للمستخدمين بنجاح.');
                   }}
                   className="px-3 py-1.5 rounded-lg border border-stone-300 dark:border-stone-700 hover:bg-black/5 dark:hover:bg-white/5 font-semibold cursor-pointer flex items-center gap-1"
                 >

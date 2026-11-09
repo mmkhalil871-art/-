@@ -10,7 +10,8 @@ import {
   ChevronDown,
   Edit3,
   Trash2,
-  Share2
+  Share2,
+  Scale
 } from 'lucide-react';
 import { MinisterialDecision } from '../types/decision';
 import { exportDecisionAsWord, exportDecisionAsText } from '../utils/exportUtils';
@@ -72,7 +73,7 @@ export const MobileDecisionCard: React.FC<MobileDecisionCardProps> = ({
   return (
     <article
       onClick={() => onView(decision, 'summary')}
-      className={`rounded-2xl border p-4 transition-all active:scale-[0.99] cursor-pointer shadow-xs ${
+      className={`relative overflow-hidden specular-border-t rounded-2xl border p-4 transition-all active:scale-[0.99] cursor-pointer shadow-xs ${
         activeTheme.isDark
           ? 'bg-zinc-850/95 border-zinc-800 text-zinc-100 active:bg-zinc-800'
           : activeTheme.id === 'parchment'
@@ -80,6 +81,10 @@ export const MobileDecisionCard: React.FC<MobileDecisionCardProps> = ({
           : 'bg-white border-stone-200 text-stone-900 active:bg-stone-50'
       }`}
     >
+      {/* Subtle watermark in corner */}
+      <div className="absolute -left-4 -bottom-4 pointer-events-none opacity-[0.03] text-current">
+        <Scale className="w-24 h-24 transform -rotate-12" strokeWidth={1.2} />
+      </div>
       {/* Top Header Row */}
       <div className="flex items-center justify-between text-xs mb-2">
         <div className="flex items-center gap-1.5 flex-wrap">

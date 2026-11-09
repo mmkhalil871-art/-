@@ -77,15 +77,9 @@ export const BackupModal: React.FC<BackupModalProps> = ({
   };
 
   const handleReset = () => {
-    if (
-      confirm(
-        'هل أنت متأكد من استعادة القرارات الافتراضية الأصلية؟ ستتم إعادة تعيين قاعدة البيانات إلى حالتها المعتمدة الأصلية.'
-      )
-    ) {
-      onResetToDefault();
-      setSuccessMsg('تمت استعادة القرارات الوزارية الأصلية بنجاح.');
-      setTimeout(() => setSuccessMsg(null), 3000);
-    }
+    onResetToDefault();
+    setSuccessMsg('تمت استعادة القرارات الوزارية الأصلية بنجاح.');
+    setTimeout(() => setSuccessMsg(null), 3000);
   };
 
   return (

@@ -55,9 +55,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           : 'bg-white border-stone-200 text-stone-900'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
+      <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 space-y-3">
         {/* Top search & quick controls row */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
           {/* Search Input */}
           <div className="relative flex-1">
             <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none opacity-45">
@@ -68,7 +68,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="ابحث برقم التشريع، عنوانه، نص مادة معينة، أو رقم مادة بقانون العمل (مثال: السلامة، المادة 14، الأجور)..."
-              className={`w-full pl-9 pr-10 py-2.5 rounded-xl text-sm transition-all border focus:outline-hidden focus:ring-2 ${
+              className={`w-full pl-9 pr-10 py-2.5 rounded-xl text-xs sm:text-sm transition-all border focus:outline-hidden focus:ring-2 ${
                 activeTheme.isDark
                   ? 'bg-zinc-800/90 border-zinc-700/80 text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:ring-amber-500/20'
                   : activeTheme.id === 'parchment'
@@ -94,7 +94,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <button
               type="button"
               onClick={onToggleFavorites}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+              className={`min-h-[38px] flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                 showOnlyFavorites
                   ? 'bg-amber-500/15 border-amber-500/40 text-amber-500 font-bold shadow-xs'
                   : activeTheme.isDark
@@ -121,7 +121,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               <button
                 type="button"
                 onClick={() => onViewModeChange('grid')}
-                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`min-h-[30px] p-1.5 rounded-lg transition-all cursor-pointer ${
                   viewMode === 'grid'
                     ? activeTheme.isDark
                       ? 'bg-zinc-700 text-white shadow-xs'
@@ -135,7 +135,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               <button
                 type="button"
                 onClick={() => onViewModeChange('table')}
-                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`min-h-[30px] p-1.5 rounded-lg transition-all cursor-pointer ${
                   viewMode === 'table'
                     ? activeTheme.isDark
                       ? 'bg-zinc-700 text-white shadow-xs'
@@ -151,7 +151,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </div>
 
         {/* Secondary filters row: Category, Status, Year, Reset */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 pt-1 text-xs">
           <div className="flex flex-wrap items-center gap-2">
             {/* Category Dropdown */}
             <div className="flex items-center gap-1.5">
@@ -159,7 +159,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               <select
                 value={selectedCategory}
                 onChange={(e) => onCategoryChange(e.target.value)}
-                className={`border rounded-lg py-1.5 px-3 text-xs focus:outline-hidden transition-colors ${
+                className={`border rounded-xl py-1.5 px-3 text-xs focus:outline-hidden transition-colors ${
                   activeTheme.isDark
                     ? 'bg-zinc-800 border-zinc-700 text-zinc-100'
                     : activeTheme.id === 'parchment'
@@ -177,7 +177,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
             {/* Status Tabs */}
             <div
-              className={`flex items-center gap-1 p-0.5 rounded-lg border ${
+              className={`flex items-center gap-1 p-0.5 rounded-xl border ${
                 activeTheme.isDark
                   ? 'bg-zinc-800/80 border-zinc-700'
                   : 'bg-stone-100/90 border-stone-200'
@@ -189,7 +189,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                   key={st}
                   type="button"
                   onClick={() => onStatusChange(st)}
-                  className={`px-2.5 py-1 rounded-md font-medium text-xs transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-medium text-xs transition-all cursor-pointer ${
                     selectedStatus === st
                       ? 'text-white shadow-xs'
                       : 'opacity-70 hover:opacity-100'
@@ -211,7 +211,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               <select
                 value={selectedYear}
                 onChange={(e) => onYearChange(e.target.value)}
-                className={`border rounded-lg py-1.5 px-2.5 text-xs focus:outline-hidden transition-colors ${
+                className={`border rounded-xl py-1.5 px-2.5 text-xs focus:outline-hidden transition-colors ${
                   activeTheme.isDark
                     ? 'bg-zinc-800 border-zinc-700 text-zinc-100'
                     : activeTheme.id === 'parchment'
@@ -239,16 +239,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             {nonPdfCount > 0 && onDeleteNonPdfDecisions && (
               <button
                 type="button"
-                onClick={() => {
-                  if (
-                    confirm(
-                      `هل ترغب بحذف كافة القرارات التي لا تملك نسخة رسمية ممسوحة (PDF) والبالغ عددها (${nonPdfCount}) قراراً؟`
-                    )
-                  ) {
-                    onDeleteNonPdfDecisions();
-                  }
-                }}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800 hover:bg-rose-100 cursor-pointer transition-colors mr-2"
+                onClick={onDeleteNonPdfDecisions}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800 hover:bg-rose-100 cursor-pointer transition-colors mr-2"
                 title="احذف كافة القرارات التي لا يوجد لها مستند بي دي اف نسخة رسمية"
               >
                 <Trash2 className="w-3.5 h-3.5 text-rose-600" />
@@ -257,13 +249,14 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             )}
           </div>
 
-          {/* Results count text */}
-          <div className="opacity-80 flex items-center gap-2">
-            <span className="text-xs">
+          {/* Results count text - clean unboxed metadata */}
+          <div className="opacity-80 flex items-center gap-2 text-xs">
+            <span>
               النتائج: <strong className="font-mono tabular-nums">{totalFiltered}</strong> تشريع موثق
             </span>
-            <span className="text-[11px] text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-300/60">
-              PDF رسمي فقط ✓
+            <span aria-hidden="true" className="opacity-40">·</span>
+            <span className="text-emerald-700 dark:text-emerald-300 font-bold">
+              ✓ كافة التشريعات مرفق بها PDF رسمي
             </span>
           </div>
         </div>

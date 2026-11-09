@@ -231,7 +231,6 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
 
   const handleRemoveArticle = (id: string) => {
     if (articles.length <= 1) {
-      alert('يجب أن يتضمن القرار مادة واحدة على الأقل.');
       return;
     }
     setArticles(articles.filter((a) => a.id !== id));
