@@ -60,26 +60,32 @@ export const Header: React.FC<HeaderProps> = ({
       style={{ backgroundColor: 'var(--theme-header-bg)' }}
     >
       <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 xl:px-10">
-        <div className="flex items-center justify-between gap-2 sm:gap-3 h-16">
+        <div className="flex items-center justify-between gap-2 sm:gap-4 h-16 sm:h-18">
           {/* Brand Identity */}
-          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
             <div
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border flex items-center justify-center shadow-xs transition-transform hover:scale-105 shrink-0"
+              className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-2xl border flex items-center justify-center shadow-md transition-all duration-300 hover:scale-105 shrink-0 group"
               style={{
-                backgroundColor: `${activeAccent.colorHex}22`,
+                backgroundColor: `${activeAccent.colorHex}20`,
                 borderColor: `${activeAccent.colorHex}55`,
                 color: activeAccent.colorHex,
-                boxShadow: `0 0 14px -1px ${activeAccent.colorHex}35`,
+                boxShadow: `0 0 18px -2px ${activeAccent.colorHex}35`,
               }}
             >
-              <Scale className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Scale className="w-5 h-5 sm:w-5.5 sm:h-5.5 transition-transform duration-300 group-hover:rotate-6" />
             </div>
             <a href="/" className="flex flex-col text-right group">
-              <span className="text-xs sm:text-sm md:text-base font-black tracking-tight text-white group-hover:opacity-90 transition-opacity whitespace-nowrap">
-                المنظومة الوطنية للتشريعات
-              </span>
-              <span className="text-[10px] sm:text-[11px] opacity-70 font-sans -mt-0.5 hidden xs:inline truncate max-w-[170px] sm:max-w-xs">
-                {law ? lawTitle : 'القرارات واللوائح الوزارية'}
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm md:text-base font-black tracking-tight text-white group-hover:opacity-90 transition-opacity whitespace-nowrap">
+                  المنظومة الوطنية للتشريعات
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  منظومة معتمدة
+                </span>
+              </div>
+              <span className="text-[10px] sm:text-[11px] opacity-75 font-sans -mt-0.5 hidden xs:inline truncate max-w-[190px] sm:max-w-md">
+                {law ? lawTitle : 'القرارات واللوائح الوزارية المنفذة لقانون العمل'}
               </span>
             </a>
           </div>
@@ -88,16 +94,19 @@ export const Header: React.FC<HeaderProps> = ({
           <nav className="hidden lg:flex items-center gap-1.5 text-xs font-semibold">
             <a
               href="#decisions-catalog"
-              className="px-3 py-1.5 rounded-lg hover:bg-white/10 text-white/90 hover:text-white transition-colors"
+              className="px-3 py-2 rounded-xl hover:bg-white/10 text-white/90 hover:text-white transition-all flex items-center gap-1.5"
             >
-              دليل التشريعات ({totalDecisionsCount})
+              <span>دليل التشريعات</span>
+              <span className="px-1.5 py-0.2 rounded-md bg-white/15 text-white text-[11px] font-mono font-bold">
+                {totalDecisionsCount}
+              </span>
             </a>
 
             {law ? (
               <button
                 type="button"
                 onClick={onOpenLaborLaw}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/10 text-sky-300 hover:text-sky-200 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-white/10 text-sky-300 hover:text-sky-200 transition-all cursor-pointer"
                 title="عرض نص قانون العمل (Word + PDF)"
               >
                 <FileDown className="w-3.5 h-3.5" />
@@ -117,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onOpenLawGuide}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/10 text-white/90 hover:text-white transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-white/10 text-white/90 hover:text-white transition-all cursor-pointer"
             >
               <BookOpen className="w-3.5 h-3.5 opacity-70" />
               <span>أبواب القانون</span>
@@ -126,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onOpenBackup}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-white/10 text-white/80 hover:text-white transition-all cursor-pointer"
               title="النسخ الاحتياطي وتصدير البيانات"
             >
               <Download className="w-3.5 h-3.5 opacity-70" />
@@ -169,31 +178,25 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden sm:inline">ألوان المظهر</span>
             </button>
 
-            {/* Device Mode Switcher (Mobile Streamlined vs Desktop Workspace) */}
-            {onToggleDeviceMode && (
-              <button
-                type="button"
-                onClick={onToggleDeviceMode}
-                className="min-h-[38px] flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/15 text-white text-xs font-medium transition-all cursor-pointer shadow-xs active:scale-95"
-                title={
-                  effectiveMode === 'mobile'
-                    ? 'التبديل إلى نسخة الحاسب والتابلت الكاملة'
-                    : 'التبديل إلى النسخة الميسرة للهواتف الذكية'
+            {/* Mobile Phone App Gateway & Direct Download Hub */}
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenApkModal) {
+                  onOpenApkModal();
+                } else if (onToggleDeviceMode) {
+                  onToggleDeviceMode();
                 }
-              >
-                {effectiveMode === 'mobile' ? (
-                  <>
-                    <Monitor className="w-4 h-4 text-amber-300 shrink-0" />
-                    <span className="hidden md:inline font-bold text-amber-200">واجهة الحاسب</span>
-                  </>
-                ) : (
-                  <>
-                    <Smartphone className="w-4 h-4 text-emerald-300 shrink-0" />
-                    <span className="hidden md:inline font-bold text-emerald-200">نسخة الموبايل</span>
-                  </>
-                )}
-              </button>
-            )}
+              }}
+              className="min-h-[38px] flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-emerald-500/50 bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 text-xs font-bold transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+              title="تطبيق الهاتف الجوال الذكي (تحميل مباشر وتشغيل بدون إنترنت 100%)"
+            >
+              <Smartphone className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>تطبيق الموبايل</span>
+              <span className="hidden xl:inline-block text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-200 border border-emerald-500/30 font-semibold">
+                تحميل مباشر
+              </span>
+            </button>
 
             {/* Install PWA */}
             <PWAInstallButton decisions={decisions} law={law} />

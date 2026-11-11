@@ -317,9 +317,9 @@ function MainDashboard() {
       />
 
       {/* Hero Strip with Institutional Notice */}
-      {/* Executive Hero Section */}
+      {/* Executive Modern Hero Section */}
       <section
-        className="relative py-8 sm:py-10 lg:py-12 border-b border-black/15 dark:border-white/10 no-print transition-colors duration-200 overflow-hidden specular-border-t"
+        className="relative py-10 sm:py-12 lg:py-14 border-b border-black/15 dark:border-white/10 no-print transition-colors duration-200 overflow-hidden specular-border-t"
         style={{
           backgroundColor: 'var(--theme-header-bg)',
           color:
@@ -330,83 +330,88 @@ function MainDashboard() {
               : '#ffffff',
         }}
       >
-        {/* Subtle Ambient Background Glow for Eye Comfort */}
+        {/* Subtle Ambient Background Radial Highlight */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-45 mix-blend-screen"
+          className="absolute inset-0 pointer-events-none opacity-40 mix-blend-screen"
           style={{
-            background: `radial-gradient(ellipse 70% 60% at 50% -10%, ${activeAccent.colorHex}40 0%, transparent 75%)`,
+            background: `radial-gradient(ellipse 65% 55% at 50% -10%, ${activeAccent.colorHex}45 0%, transparent 75%)`,
           }}
         />
 
         {/* Delicate Arabesque Geometric Lattice Pattern */}
-        <div className="absolute inset-0 bg-arabic-lattice opacity-35 pointer-events-none" />
+        <div className="absolute inset-0 bg-arabic-lattice opacity-30 pointer-events-none" />
 
         {/* Large Decorative Legal Scale Watermark Crest */}
-        <div className="absolute -left-10 -bottom-20 pointer-events-none opacity-[0.045] text-white">
+        <div className="absolute -left-12 -bottom-24 pointer-events-none opacity-[0.035] text-white">
           <Scale className="w-96 h-96 transform -rotate-12" strokeWidth={1} />
         </div>
 
-        <div className="relative w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs text-amber-300 font-semibold shadow-xs">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+        <div className="relative w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 sm:gap-8">
+          <div className="space-y-3.5 max-w-3xl">
+            {/* Clean Institutional Kicker */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs text-amber-300 font-semibold shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-xs" />
               <span>المرجع الوطني المعتمد · جمهورية مصر العربية</span>
+              <span aria-hidden="true" className="opacity-40">·</span>
+              <span className="text-white/85 font-normal">قانون العمل 14 لسنة 2025</span>
             </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-[2.2rem] font-extrabold tracking-tight text-white leading-tight">
-              قاعدة القرارات واللوائح المنفذة لقانون العمل
+
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[2.5rem] font-black tracking-tight text-white leading-tight">
+              قاعدة القرارات واللوائح التنفيذية لقانون العمل
             </h1>
+
             <p className="text-xs sm:text-sm text-white/80 leading-relaxed max-w-2xl font-sans">
-              مرجع قانوني رقمي موثق بالنسخ الممسوحة ضوئياً (PDF) والنصوص المكتوبة (Word) لتيسير
-              النقل والاقتباس وصياغة المذكرات، مع إمكانية رفع المستندات وتنظيمها آلياً على مدار ساعات العمل الطويلة.
+              مرجع قانوني رقمي موثق بالنسخ الممسوحة ضوئياً (PDF) والنصوص المحررة (Word) لتيسير
+              النقل والاقتباس وصياغة المذكرات والدعاوى العمالية، مع محرك بحث فوري وربط مباشر بمواد قانون العمل الجديد.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-            {/* Primary Add Legislation with Shimmer */}
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            {/* Primary Add Legislation */}
             <button
               type="button"
               onClick={() => {
                 setEditingDecision(null);
                 setIsFormOpen(true);
               }}
-              className="btn-shimmer inline-flex items-center justify-center gap-2 px-4.5 py-2.5 min-h-[44px] text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+              className="btn-shimmer inline-flex items-center justify-center gap-2 px-5 py-3 min-h-[46px] text-white font-extrabold rounded-2xl text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
               style={{ backgroundColor: activeAccent.colorHex }}
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>إضافة تشريع جديد</span>
             </button>
 
-            {/* Smart Document Library & Ingestion Button with Shimmer */}
+            {/* Smart Document Library */}
             <button
               type="button"
               onClick={() => setIsDocumentLibraryOpen(true)}
-              className="btn-shimmer inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer border border-emerald-400/30"
+              className="btn-shimmer inline-flex items-center justify-center gap-2 px-4 py-3 min-h-[46px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer border border-emerald-400/30"
               title="رفع مستندات القرارات وتنظيمها نيابة عنك"
             >
               <FolderOpen className="w-4 h-4 text-emerald-200" />
               <span>مكتبة الوثائق الذكية</span>
             </button>
 
-            {/* Mobile / APK App Launcher */}
+            {/* Mobile Phone App */}
             <button
               type="button"
               onClick={() => setIsApkModalOpen(true)}
-              className="btn-shimmer inline-flex items-center justify-center gap-2 px-3.5 py-2.5 min-h-[44px] bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer border border-sky-400/30"
-              title="تثبيت تطبيق أندرويد APK للهاتف المحمول"
+              className="btn-shimmer inline-flex items-center justify-center gap-2 px-4 py-3 min-h-[46px] bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-2xl text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer border border-sky-400/30"
+              title="تحميل وتثبيت تطبيق الهاتف الجوال الذكي أوفلاين"
             >
               <Smartphone className="w-4 h-4 text-sky-200" />
-              <span>تطبيق الهاتف (APK)</span>
+              <span>تطبيق الهاتف</span>
             </button>
 
-            {/* Offline Launcher */}
+            {/* Offline App Launcher */}
             <button
               type="button"
               onClick={() => setIsInstallModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 min-h-[44px] bg-white/10 hover:bg-white/15 text-white/90 hover:text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer border border-white/15 backdrop-blur-xs"
+              className="inline-flex items-center justify-center gap-2 px-4 py-3 min-h-[46px] bg-white/10 hover:bg-white/15 text-white/95 rounded-2xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border border-white/20 backdrop-blur-md active:scale-95"
               title="خيارات تشغيل المنظومة كبرنامج حاسب آلي بدون إنترنت"
             >
-              <WifiOff className="w-4 h-4" />
-              <span>بدون إنترنت</span>
+              <WifiOff className="w-4 h-4 text-amber-300" />
+              <span>تشغيل أوفلاين</span>
             </button>
           </div>
         </div>
@@ -743,10 +748,14 @@ function MainDashboard() {
         onShowToast={showToast}
       />
 
-      {/* Android APK & WebAPK Hub Modal */}
+      {/* Android APK & Mobile App Hub Modal */}
       <AndroidApkModal
         isOpen={isApkModalOpen}
         onClose={() => setIsApkModalOpen(false)}
+        decisions={decisions}
+        law={currentLaw}
+        effectiveMode={effectiveMode}
+        onToggleDeviceMode={toggleMode}
       />
 
       {/* Mobile Streamlined Bottom Quick Dock */}

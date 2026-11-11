@@ -1,6 +1,11 @@
 import mammoth from 'mammoth';
 import { MinisterialDecision, DecisionArticle, DecisionStatus } from '../types/decision';
 import { CATEGORIES } from '../data/seedDecisions';
+import {
+  inferArticlesFromTopic,
+  generateLegalBasisSummary,
+  sanitizeDecisionLawArticles,
+} from './lawArticlesHelper';
 
 export interface IngestedDocumentInfo {
   file: File;
@@ -97,14 +102,26 @@ export function detectCategoryFromText(text: string): string {
 }
 
 /**
- * Extracts references to Labor Law 14/2025 articles
+ * Extracts references to Labor Law 14/2025 articles from decision text or preamble.
+ * Crucially removes citations to "قانون رقم 14 لسنة 2025" beforehand so that the statute's number (14)
+ * is never confused with substantive "المادة 14".
  */
-export function extractRelatedLawArticles(text: string): string[] {
+export function extractRelatedLawArticles(
+  text: string,
+  categoryHint?: string,
+  titleHint?: string
+): string[] {
   const results = new Set<string>();
   const norm = normalizeArabicText(text);
 
-  // Look for patterns like "المواد (50، 51، 52)", "المادة 14", "مادة 208"
-  const multiMatches = norm.matchAll(/(?:المواد|المادتين|المادتان)\s*\(?([0-9\s،,و]+)\)?/g);
+  // Strip references to statute name/number (e.g., "قانون العمل رقم 14 لسنة 2025" or "القانون رقم 14")
+  // so the number 14 is never extracted as an article!
+  const strippedText = norm
+    .replace(/(?:قانون|القانون|ق|قانون العمل)\s*(?:الصادر بالقانون\s*)?(?:رقم\s*)?14\s*(?:لسنه|لسنة|عام)?\s*2025/gi, ' [قانون_العمل] ')
+    .replace(/(?:قانون|القانون)\s*(?:رقم\s*)?14\b/gi, ' [قانون_العمل] ');
+
+  // Look for patterns like "المواد (50، 51، 52)", "مادتين 208 و 216"
+  const multiMatches = strippedText.matchAll(/(?:المواد|المادتين|المادتان)\s*\(?([0-9\s،,و]+)\)?/g);
   for (const m of multiMatches) {
     const rawNumbers = m[1].split(/[،,و\s]+/);
     for (const num of rawNumbers) {
@@ -115,7 +132,8 @@ export function extractRelatedLawArticles(text: string): string[] {
     }
   }
 
-  const singleMatches = norm.matchAll(/(?:الماده|ماده)\s*\(?(\d+)\)?/g);
+  // Look for single article matches e.g. "المادة 208", "مادة 50"
+  const singleMatches = strippedText.matchAll(/(?:الماده|ماده)\s*(?:رقم\s*)?\(?(\d+)\)?/g);
   for (const m of singleMatches) {
     const cleanNum = m[1].trim();
     if (cleanNum && !isNaN(Number(cleanNum)) && Number(cleanNum) <= 300) {
@@ -123,9 +141,26 @@ export function extractRelatedLawArticles(text: string): string[] {
     }
   }
 
-  // Fallback defaults if none detected
+  // Check if "المادة 14" was added: If the decision is NOT about public employment offices (مكاتب التشغيل),
+  // then "14" was an accidental residue of "قانون 14", so delete it!
+  if (results.has('المادة 14')) {
+    const isActuallyEmploymentOffice =
+      norm.includes('مكاتب التشغيل') ||
+      norm.includes('سياسه التشغيل العامه') ||
+      norm.includes('مكتب تشغيل عام');
+    if (!isActuallyEmploymentOffice) {
+      results.delete('المادة 14');
+    }
+  }
+
+  // If no explicit substantive articles were extracted, intelligently infer from topic/category
+  // NEVER fallback to "المادة 14"!
   if (results.size === 0) {
-    results.add('المادة 14');
+    const topicArticles = inferArticlesFromTopic(
+      `${titleHint || ''} ${text}`,
+      categoryHint
+    );
+    return topicArticles;
   }
 
   return Array.from(results);
@@ -325,7 +360,11 @@ export async function analyzeUploadedDocument(
   }
 
   const detectedCategory = detectCategoryFromText(searchCorpus);
-  const detectedRelatedArticles = extractRelatedLawArticles(searchCorpus);
+  const detectedRelatedArticles = extractRelatedLawArticles(
+    searchCorpus,
+    detectedCategory,
+    detectedTitle
+  );
 
   // Generate ID
   const tempId = matchedDecision
@@ -431,7 +470,15 @@ export function buildOrganizedLibraryDecisions(
               },
             ];
 
-      target = {
+      const docArticles =
+        doc.detectedRelatedArticles && doc.detectedRelatedArticles.length > 0
+          ? doc.detectedRelatedArticles
+          : inferArticlesFromTopic(
+              `${doc.detectedTitle || ''} ${doc.extractedText || ''}`,
+              doc.detectedCategory
+            );
+
+      const rawTarget: MinisterialDecision = {
         id: targetId,
         decisionNumber: decNumber,
         year: decYear,
@@ -443,8 +490,8 @@ export function buildOrganizedLibraryDecisions(
         effectiveDate: `${decYear}-02-01`,
         status: 'نافذ',
         category: doc.detectedCategory || CATEGORIES[1] || 'علاقات العمل وظروف وشروط التشغيل',
-        relatedLawArticles: doc.detectedRelatedArticles || ['المادة 14'],
-        legalBasisSummary: `صادر تنفيذاً لأحكام قانون العمل رقم 14 لسنة 2025 (${(doc.detectedRelatedArticles || ['المادة 14']).join('، ')})`,
+        relatedLawArticles: docArticles,
+        legalBasisSummary: generateLegalBasisSummary(docArticles),
         executingSubject: doc.detectedTitle || 'تنظيم وتطبيق أحكام قانون العمل',
         preamble:
           authenticPreamble && authenticPreamble.trim()
@@ -461,6 +508,7 @@ export function buildOrganizedLibraryDecisions(
         updatedAt: new Date().toISOString(),
       };
 
+      target = sanitizeDecisionLawArticles(rawTarget);
       decisionsMap.set(targetId, target);
       newCount++;
     } else {

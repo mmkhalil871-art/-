@@ -1,7 +1,11 @@
 import { MinisterialDecision } from '../types/decision';
 import { LaborLawInfo } from '../data/laborLawData';
 import { getAllLawArticlesFlattened } from './lawStorage';
-import { normalizeArticleName, generateLegalBasisSummary } from './lawArticlesHelper';
+import {
+  normalizeArticleName,
+  generateLegalBasisSummary,
+  sanitizeDecisionLawArticles,
+} from './lawArticlesHelper';
 
 /**
  * Normalizes text for keyword matching
@@ -131,6 +135,10 @@ export function autoLinkDecisionsToUploadedLaw(
     if (decision.relatedLawArticles && decision.relatedLawArticles.length > 0) {
       decision.relatedLawArticles.forEach((existingArtNum) => {
         const norm = normalizeArticleName(existingArtNum);
+        // Exclude spurious "المادة 14" unless decision is actually about employment offices
+        if (norm === 'المادة 14' && !decSearchText.includes('مكاتب التشغيل')) {
+          return;
+        }
         const found = flattenedArticles.find(
           (a) => normalizeArticleName(a.number) === norm
         );
@@ -185,7 +193,7 @@ export function autoLinkDecisionsToUploadedLaw(
 
     const updatedLegalBasis = generateLegalBasisSummary(finalArticles);
 
-    return {
+    const updatedDecision: MinisterialDecision = {
       ...decision,
       relatedLawArticles: finalArticles,
       legalBasisSummary: updatedLegalBasis,
@@ -193,5 +201,7 @@ export function autoLinkDecisionsToUploadedLaw(
         matchedDetails.length > 0 ? matchedDetails : decision.enactedLawArticlesDetail,
       updatedAt: new Date().toISOString(),
     };
+
+    return sanitizeDecisionLawArticles(updatedDecision);
   });
 }

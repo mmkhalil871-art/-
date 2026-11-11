@@ -892,3 +892,736 @@ export function downloadPortableOfflineApp(
     'text/html;charset=utf-8'
   );
 }
+
+/**
+ * Generates and downloads a dedicated Single-File Mobile Phone Application (HTML5 / PWA)
+ * Designed specifically for smartphones (Android & iOS).
+ * Allows direct download to phone, works 100% offline, requires ZERO app store or server.
+ */
+export function downloadMobilePhoneApp(
+  decisions: MinisterialDecision[],
+  law?: LaborLawInfo | null
+): void {
+  const activeLaw = law !== undefined ? law : getStoredLaborLaw();
+  const safeDecisionsJson = JSON.stringify(decisions).replace(/</g, '\\u003c');
+  const safeLawJson = JSON.stringify(activeLaw || {}).replace(/</g, '\\u003c');
+
+  const mobileHtml = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+  <title>تطبيق قانون العمل 14 لسنة 2025 والقرارات الوزارية (نسخة الهاتف المحمول)</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="قرارات العمل">
+  <meta name="theme-color" content="#18181b">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #09090b;
+      --card-bg: #18181b;
+      --card-border: #27272a;
+      --text: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --accent: #10b981;
+      --accent-gold: #f59e0b;
+      --dock-bg: rgba(24, 24, 27, 0.95);
+      --input-bg: #27272a;
+    }
+    body.light {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --accent: #059669;
+      --accent-gold: #d97706;
+      --dock-bg: rgba(255, 255, 255, 0.95);
+      --input-bg: #f1f5f9;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Cairo, Tahoma, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: calc(75px + env(safe-area-inset-bottom, 16px));
+      -webkit-font-smoothing: antialiased;
+      user-select: text;
+    }
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--dock-bg);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 16px;
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .app-title-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .app-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    }
+    .app-title {
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .app-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .theme-toggle-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .search-box {
+      position: relative;
+      width: 100%;
+    }
+    .search-input {
+      width: 100%;
+      padding: 10px 14px 10px 36px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--accent);
+    }
+    .clear-search-btn {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      cursor: pointer;
+      display: none;
+    }
+    .categories-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 8px 16px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      border-bottom: 1px solid var(--card-border);
+      background: var(--bg);
+    }
+    .categories-bar::-webkit-scrollbar { display: none; }
+    .cat-chip {
+      white-space: nowrap;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .cat-chip.active {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 12px 14px;
+    }
+    .install-banner {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 95, 70, 0.25));
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .install-banner-text {
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .install-banner-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .decision-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      transition: transform 0.15s ease;
+    }
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .dec-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-gold);
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .status-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .dec-title {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.45;
+      margin-bottom: 8px;
+    }
+    .law-articles-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+    .law-art-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(14, 165, 233, 0.3);
+    }
+    body.light .law-art-tag {
+      color: #0284c7;
+    }
+    .card-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-top: 1px solid var(--card-border);
+      padding-top: 10px;
+    }
+    .btn-action {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-action:active {
+      transform: scale(0.98);
+    }
+    .btn-fav.active {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--accent-gold);
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+    .articles-accordion {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--card-border);
+    }
+    .articles-accordion.open {
+      display: block;
+    }
+    .preamble-box {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--input-bg);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      white-space: pre-line;
+      line-height: 1.6;
+    }
+    .article-item {
+      padding: 10px;
+      background: var(--input-bg);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .article-num {
+      font-weight: 800;
+      font-size: 12px;
+      color: var(--accent-gold);
+      margin-bottom: 4px;
+    }
+    .article-text {
+      font-size: 12.5px;
+      line-height: 1.6;
+      white-space: pre-line;
+    }
+    /* Bottom Navigation Dock */
+    .bottom-dock {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      background: var(--dock-bg);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid var(--card-border);
+      padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 10px));
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+    .dock-tab {
+      display: flex;
+      flex-col;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 4px;
+      border-radius: 12px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dock-tab.active {
+      color: var(--accent);
+      font-weight: 800;
+    }
+    .dock-icon {
+      font-size: 18px;
+      margin-bottom: 2px;
+    }
+    .dock-label {
+      font-size: 10.5px;
+    }
+    /* Law View Styles */
+    .chapter-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .chapter-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 85px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #18181b;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 1px solid #3f3f46;
+      z-index: 100;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Mobile App Header -->
+  <header class="app-header">
+    <div class="header-top">
+      <div class="app-title-box">
+        <div class="app-icon">⚖️</div>
+        <div>
+          <div class="app-title">قرارات قانون العمل 14 لسنة 2025</div>
+          <div class="app-subtitle" id="stats-subtitle">جاري التحميل...</div>
+        </div>
+      </div>
+      <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn">☀️ فاتح</button>
+    </div>
+
+    <!-- Live Search Box -->
+    <div class="search-box">
+      <input type="text" id="searchInput" class="search-input" placeholder="ابحث برقم القرار، عنوانه، المادة (مثال: السلامة، 50، الأجور)..." oninput="handleSearch(this.value)">
+      <button id="clearSearch" class="clear-search-btn" onclick="clearSearchInput()">✕</button>
+    </div>
+  </header>
+
+  <!-- Horizontal Scrollable Category Pills -->
+  <div class="categories-bar" id="categoriesBar"></div>
+
+  <!-- Main Content Views -->
+  <div class="container">
+    <!-- Home Screen Add Helper Banner -->
+    <div class="install-banner" id="installBanner">
+      <div class="install-banner-text">
+        <strong>📲 تثبيت التطبيق على شاشة هاتفك:</strong><br>
+        اضغط على خيارات المتصفح (⋮ أو مشاركة) واختر <strong>«إضافة إلى الشاشة الرئيسية»</strong> ليعمل كبرنامج مستقل دائماً.
+      </div>
+      <button class="install-banner-btn" onclick="dismissBanner()">حسناً</button>
+    </div>
+
+    <!-- Tab 1: Decisions View -->
+    <div id="decisionsView">
+      <div id="decisionsList"></div>
+    </div>
+
+    <!-- Tab 2: Labor Law View -->
+    <div id="lawView" style="display: none;">
+      <div id="lawContent"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Mobile Dock -->
+  <nav class="bottom-dock">
+    <button class="dock-tab active" id="tab-decisions" onclick="switchTab('decisions')">
+      <div class="dock-icon">📜</div>
+      <div class="dock-label">القرارات</div>
+    </button>
+    <button class="dock-tab" id="tab-law" onclick="switchTab('law')">
+      <div class="dock-icon">⚖️</div>
+      <div class="dock-label">قانون العمل</div>
+    </button>
+    <button class="dock-tab" id="tab-search" onclick="focusSearch()">
+      <div class="dock-icon">🔍</div>
+      <div class="dock-label">بحث سريع</div>
+    </button>
+    <button class="dock-tab" id="tab-favs" onclick="filterFavorites()">
+      <div class="dock-icon">⭐</div>
+      <div class="dock-label">المفضلة</div>
+    </button>
+  </nav>
+
+  <!-- Toast Message -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const DECISIONS = ${safeDecisionsJson};
+    const LABOR_LAW = ${safeLawJson};
+
+    let currentCategory = 'جميع التصنيفات';
+    let searchQuery = '';
+    let showFavoritesOnly = false;
+    let activeTab = 'decisions';
+    let favorites = JSON.parse(localStorage.getItem('mobile_law14_favs') || '[]');
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2500);
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+      const isLight = document.body.classList.contains('light');
+      document.getElementById('theme-btn').innerText = isLight ? '🌙 داكن' : '☀️ فاتح';
+      localStorage.setItem('mobile_theme', isLight ? 'light' : 'dark');
+    }
+
+    function dismissBanner() {
+      document.getElementById('installBanner').style.display = 'none';
+      localStorage.setItem('mobile_banner_dismissed', 'true');
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      document.getElementById('tab-decisions').classList.toggle('active', tab === 'decisions' && !showFavoritesOnly);
+      document.getElementById('tab-law').classList.toggle('active', tab === 'law');
+      document.getElementById('tab-favs').classList.toggle('active', showFavoritesOnly);
+
+      if (tab === 'decisions') {
+        showFavoritesOnly = false;
+        document.getElementById('decisionsView').style.display = 'block';
+        document.getElementById('lawView').style.display = 'none';
+        renderDecisions();
+      } else if (tab === 'law') {
+        showFavoritesOnly = false;
+        document.getElementById('decisionsView').style.display = 'none';
+        document.getElementById('lawView').style.display = 'block';
+        renderLaw();
+      }
+    }
+
+    function filterFavorites() {
+      showFavoritesOnly = !showFavoritesOnly;
+      activeTab = 'decisions';
+      document.getElementById('tab-favs').classList.toggle('active', showFavoritesOnly);
+      document.getElementById('tab-decisions').classList.toggle('active', !showFavoritesOnly);
+      document.getElementById('decisionsView').style.display = 'block';
+      document.getElementById('lawView').style.display = 'none';
+      renderDecisions();
+      if (showFavoritesOnly) {
+        showToast('عرض التشريعات المحفوظة في المفضلة');
+      }
+    }
+
+    function focusSearch() {
+      switchTab('decisions');
+      const input = document.getElementById('searchInput');
+      input.focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function handleSearch(val) {
+      searchQuery = (val || '').trim().toLowerCase();
+      document.getElementById('clearSearch').style.display = searchQuery ? 'block' : 'none';
+      if (activeTab === 'decisions') {
+        renderDecisions();
+      } else {
+        renderLaw();
+      }
+    }
+
+    function clearSearchInput() {
+      document.getElementById('searchInput').value = '';
+      handleSearch('');
+    }
+
+    function toggleFavorite(id, e) {
+      if (e) e.stopPropagation();
+      const idx = favorites.indexOf(id);
+      if (idx > -1) {
+        favorites.splice(idx, 1);
+        showToast('تمت الإزالة من المفضلة');
+      } else {
+        favorites.push(id);
+        showToast('تمت الإضافة إلى المفضلة ⭐');
+      }
+      localStorage.setItem('mobile_law14_favs', JSON.stringify(favorites));
+      renderDecisions();
+    }
+
+    function toggleAccordion(id) {
+      const el = document.getElementById('acc-' + id);
+      const btn = document.getElementById('btn-acc-' + id);
+      if (el) {
+        const isOpen = el.classList.toggle('open');
+        if (btn) btn.innerText = isOpen ? '▲ إخفاء نصوص المواد' : '▼ استعراض نصوص المواد الرسمية';
+      }
+    }
+
+    function copyDecisionText(dec) {
+      let text = 'القرار الوزاري رقم (' + dec.decisionNumber + ') لسنة ' + dec.year + '\\n';
+      text += dec.title + '\\n';
+      text += 'السند: ' + (dec.legalBasisSummary || '') + '\\n\\n';
+      if (dec.preamble) text += dec.preamble + '\\n\\n';
+      if (dec.articles && dec.articles.length > 0) {
+        dec.articles.forEach(a => {
+          text += a.articleNumber + (a.title ? ' (' + a.title + ')' : '') + ':\\n' + a.content + '\\n\\n';
+        });
+      }
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+        showToast('تم نسخ نص القرار بالكامل إلى الحافظة!');
+      }
+    }
+
+    function filterByLawArticle(art) {
+      document.getElementById('searchInput').value = art;
+      handleSearch(art);
+      switchTab('decisions');
+    }
+
+    function renderDecisions() {
+      const listEl = document.getElementById('decisionsList');
+      const filtered = DECISIONS.filter(d => {
+        if (currentCategory !== 'جميع التصنيفات' && d.category !== currentCategory) return false;
+        if (showFavoritesOnly && !favorites.includes(d.id)) return false;
+        if (searchQuery) {
+          const text = (d.decisionNumber + ' ' + d.title + ' ' + (d.relatedLawArticles || []).join(' ') + ' ' + (d.tags || []).join(' ') + ' ' + (d.preamble || '') + ' ' + (d.articles ? d.articles.map(a => a.content).join(' ') : '')).toLowerCase();
+          if (!text.includes(searchQuery)) return false;
+        }
+        return true;
+      });
+
+      document.getElementById('stats-subtitle').innerText = filtered.length + ' قرار وزاري موثق رسمي';
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<div style="text-align: center; padding: 40px 10px; opacity: 0.7;">لا توجد قرارات مطابقة لخيارات البحث.</div>';
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(d => {
+        const isFav = favorites.includes(d.id);
+        const artPills = (d.relatedLawArticles || []).map(a => 
+          '<span class="law-art-tag" onclick="filterByLawArticle(\\'' + a + '\\')">' + a + '</span>'
+        ).join('');
+
+        const articlesHtml = (d.articles || []).map(a => 
+          '<div class="article-item">' +
+            '<div class="article-num">' + a.articleNumber + (a.title ? ' - ' + a.title : '') + '</div>' +
+            '<div class="article-text">' + a.content + '</div>' +
+          '</div>'
+        ).join('');
+
+        return '<div class="decision-card">' +
+          '<div class="card-top">' +
+            '<div class="dec-badge">قرار ' + d.decisionNumber + ' لسنة ' + d.year + '</div>' +
+            '<div class="status-badge">' + (d.status || 'نافذ') + '</div>' +
+          '</div>' +
+          '<div class="dec-title">' + d.title + '</div>' +
+          (artPills ? '<div class="law-articles-row">' + artPills + '</div>' : '') +
+          '<div class="card-meta">' +
+            '<span>🏛️ ' + (d.issuingAuthority || 'وزير العمل') + '</span>' +
+            '<span>📰 ' + (d.gazetteIssue || '') + '</span>' +
+            '<span>📅 ' + (d.effectiveDate || d.issueDate || '') + '</span>' +
+          '</div>' +
+          '<div class="card-actions">' +
+            '<button class="btn-action" id="btn-acc-' + d.id + '" onclick="toggleAccordion(\\'' + d.id + '\\')">▼ استعراض نصوص المواد</button>' +
+            '<button class="btn-action" onclick="copyDecisionText(' + JSON.stringify(d).replace(/"/g, '&quot;') + ')">📋 نسخ النص</button>' +
+            '<button class="btn-action btn-fav ' + (isFav ? 'active' : '') + '" onclick="toggleFavorite(\\'' + d.id + '\\', event)">' + (isFav ? '★ محفوظة' : '☆ مفضلة') + '</button>' +
+          '</div>' +
+          '<div class="articles-accordion" id="acc-' + d.id + '">' +
+            (d.preamble ? '<div class="preamble-box"><strong>الديباجة:</strong>\\n' + d.preamble + '</div>' : '') +
+            articlesHtml +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function renderLaw() {
+      const container = document.getElementById('lawContent');
+      if (!LABOR_LAW || !LABOR_LAW.chapters) {
+        container.innerHTML = '<div style="text-align: center; padding: 40px;">لا تتوفر نصوص لمواد قانون العمل حالياً.</div>';
+        return;
+      }
+
+      container.innerHTML = '<div class="decision-card" style="margin-bottom: 16px;">' +
+        '<div style="font-size: 16px; font-weight: 800; color: var(--accent-gold); margin-bottom: 6px;">' + (LABOR_LAW.title || 'قانون العمل رقم 14 لسنة 2025') + '</div>' +
+        '<div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">' + (LABOR_LAW.preamble || '') + '</div>' +
+      '</div>' +
+      LABOR_LAW.chapters.map(ch => {
+        const matchingArts = (ch.articles || []).filter(a => {
+          if (!searchQuery) return true;
+          return (a.number + ' ' + (a.title || '') + ' ' + a.text).toLowerCase().includes(searchQuery);
+        });
+
+        if (searchQuery && matchingArts.length === 0) return '';
+
+        return '<div class="chapter-card">' +
+          '<div class="chapter-title">' + ch.chapterNumber + ': ' + ch.title + '</div>' +
+          '<div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 10px;">' + ch.articlesRange + ' - ' + ch.summary + '</div>' +
+          matchingArts.map(a => 
+            '<div class="article-item">' +
+              '<div class="article-num">' + a.number + (a.title ? ' (' + a.title + ')' : '') + '</div>' +
+              '<div class="article-text">' + a.text + '</div>' +
+            '</div>'
+          ).join('') +
+        '</div>';
+      }).join('');
+    }
+
+    function initCategories() {
+      const cats = ['جميع التصنيفات', 'عقود العمل والتشغيل', 'السلامة والصحة المهنية', 'الأجور والبدلات', 'تشغيل الفئات الأولى بالرعاية', 'تفتيش العمل والرقابة', 'منازعات العمل والتوفيق', 'التدريب والتأهيل المهني'];
+      const bar = document.getElementById('categoriesBar');
+      bar.innerHTML = cats.map(c => 
+        '<button class="cat-chip ' + (c === currentCategory ? 'active' : '') + '" onclick="selectCategory(\\'' + c + '\\')">' + c + '</button>'
+      ).join('');
+    }
+
+    function selectCategory(cat) {
+      currentCategory = cat;
+      initCategories();
+      switchTab('decisions');
+      renderDecisions();
+    }
+
+    // Init App
+    window.onload = function() {
+      if (localStorage.getItem('mobile_theme') === 'light') {
+        toggleTheme();
+      }
+      if (localStorage.getItem('mobile_banner_dismissed') === 'true') {
+        document.getElementById('installBanner').style.display = 'none';
+      }
+      initCategories();
+      renderDecisions();
+    };
+  </script>
+</body>
+</html>`;
+
+  downloadBlob(
+    mobileHtml,
+    'تطبيق_قانون_العمل_14_للهاتف_المحمول.html',
+    'text/html;charset=utf-8'
+  );
+}
+

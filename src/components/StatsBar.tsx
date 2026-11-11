@@ -108,58 +108,57 @@ export const StatsBar: React.FC<StatsBarProps> = ({ decisions }) => {
       <div className="absolute inset-0 bg-dot-matrix opacity-40 pointer-events-none" />
 
       <div className="relative w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 xl:px-10">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5 lg:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           {metrics.map((m, idx) => {
             const Icon = m.icon;
-            // Calculate a visual completion percentage for the micro bar
             const pct = total > 0 ? Math.min(100, Math.round((m.value / total) * 100)) : 0;
             return (
               <div
                 key={m.label}
-                className={`relative group p-3 sm:p-3.5 rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] specular-border-t card-elevated-hover transition-all flex flex-col justify-between overflow-hidden ${
+                className={`relative group p-3.5 sm:p-4 rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] backdrop-blur-xs specular-border-t transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg flex flex-col justify-between overflow-hidden ${
                   idx === 4 ? 'col-span-2 sm:col-span-1' : ''
                 }`}
               >
                 {/* Subtle corner glow in metric color */}
                 <div
-                  className="absolute -top-10 -left-10 w-24 h-24 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"
-                  style={{ backgroundColor: `${m.color}25` }}
+                  className="absolute -top-10 -left-10 w-28 h-28 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"
+                  style={{ backgroundColor: `${m.color}30` }}
                 />
 
-                <div className="flex items-center gap-2.5 sm:gap-3 mb-2">
+                <div className="flex items-center gap-3 mb-2.5">
                   <div
-                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs transition-transform duration-200 group-hover:scale-110"
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-transform duration-300 group-hover:scale-105"
                     style={{
-                      backgroundColor: `${m.color}22`,
+                      backgroundColor: `${m.color}20`,
                       color: m.color,
-                      boxShadow: `0 0 16px -2px ${m.color}35`,
+                      border: `1px solid ${m.color}35`,
+                      boxShadow: `0 0 16px -2px ${m.color}30`,
                     }}
                   >
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <Icon className="w-5 h-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-lg sm:text-2xl font-black font-mono tabular-nums text-white tracking-tight">
-                        {m.value}
-                      </span>
+                    <div className="text-xl sm:text-2xl font-black font-mono tabular-nums text-white tracking-tight">
+                      {m.value}
                     </div>
-                    <div className="text-[11px] sm:text-xs font-bold text-white/95 truncate">
+                    <div className="text-xs font-bold text-white/95 truncate">
                       {m.label}
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-1.5 pt-1">
-                  <div className="text-[10px] opacity-65 truncate font-sans">
+                  <div className="text-[11px] opacity-70 truncate font-sans">
                     {m.sub}
                   </div>
-                  {/* Graphical Micro Progress Bar */}
-                  <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                  {/* Micro Progress Indicator with subtle glow */}
+                  <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden p-[1px]">
                     <div
-                      className="h-full rounded-full transition-all duration-700 ease-out"
+                      className="h-full rounded-full transition-all duration-700 ease-out shadow-xs"
                       style={{
-                        width: `${Math.max(14, pct)}%`,
+                        width: `${Math.max(12, pct)}%`,
                         backgroundColor: m.color,
+                        boxShadow: `0 0 8px ${m.color}`,
                       }}
                     />
                   </div>

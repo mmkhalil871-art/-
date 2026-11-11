@@ -26,7 +26,9 @@ import {
   CheckCircle2,
   ChevronDown,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Upload,
+  AlertCircle
 } from 'lucide-react';
 import { MinisterialDecision } from '../types/decision';
 import {
@@ -79,6 +81,7 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
   const { canEditTexts, canAddDocuments, canDelete, isSuperAdmin } = useUserAccess();
   const [showDeleteModalConfirm, setShowDeleteModalConfirm] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [isDraggingPdf, setIsDraggingPdf] = useState(false);
   const [fontSize, setFontSize] = useState<number>(16);
   const [copiedFull, setCopiedFull] = useState(false);
   const [copiedArticleId, setCopiedArticleId] = useState<string | null>(null);
@@ -354,10 +357,8 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
     window.print();
   };
 
-  const handleQuickUploadPdf = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleDirectUploadPdfFile = async (file: File) => {
     if (!file || !decision) return;
-
     try {
       setLoadingPdf(true);
       const stored = await savePdfToStorage(decision.id, file, file.name);
@@ -372,6 +373,7 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
           uploadedAt: stored.uploadedAt,
           storageKey: decision.id,
         },
+        updatedAt: new Date().toISOString(),
       };
 
       if (onUpdateDecision) {
@@ -383,6 +385,14 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
     } finally {
       setLoadingPdf(false);
     }
+  };
+
+  const handleQuickUploadPdf = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await handleDirectUploadPdfFile(file);
+    }
+    if (e.target) e.target.value = '';
   };
 
   const handleRemovePdf = async () => {
@@ -401,10 +411,12 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
   const renderScannedPdfView = () => (
     <div className="flex-1 overflow-hidden bg-stone-900 flex flex-col items-stretch p-3 sm:p-5">
       {loadingPdf ? (
-        <div className="flex-1 flex items-center justify-center text-stone-300 text-sm font-cairo">
-          جارٍ تحميل النسخة الممسوحة ضوئياً...
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-stone-300 font-cairo space-y-3">
+          <RefreshCw className="w-8 h-8 text-amber-400 animate-spin mx-auto" />
+          <div className="text-white font-bold text-base">جاري فحص وتدقيق توفر مستند الـ PDF في المنظومة...</div>
+          <p className="text-xs text-stone-400 font-sans">يتم التحقق من وجود الملف الرقمي الفعلي في ذاكرة التخزين المعتمدة لهذا المتصفح</p>
         </div>
-      ) : pdfUrl || decision.pdfAttachment ? (
+      ) : pdfUrl ? (
         <div className="flex-1 flex flex-col bg-stone-800 rounded-xl overflow-hidden border border-stone-700 shadow-xl">
           {/* Top Scanned PDF Info and Action Bar */}
           <div className="p-3 bg-stone-850 border-b border-stone-700 flex items-center justify-between gap-3 text-xs text-stone-300 flex-wrap font-cairo">
@@ -413,8 +425,11 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
                 <FileCheck className="w-4 h-4 text-emerald-400" />
                 <span>النسخة الرسمية الممسوحة ضوئياً:</span>
               </span>
-              <span className="font-mono text-amber-300 font-medium">
+              <span className="font-mono text-emerald-300 font-medium">
                 {decision.pdfAttachment?.filename || 'وثيقة القرار الوزاري.pdf'}
+              </span>
+              <span className="px-2 py-0.5 rounded text-[11px] bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                ✓ مستند صالح وجاهز للعمل
               </span>
               {decision.pdfAttachment?.size && (
                 <span className="text-stone-400 text-[11px]">
@@ -424,26 +439,24 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              {pdfUrl && (
-                <a
-                  href={pdfUrl}
-                  download={decision.pdfAttachment?.filename || `قرار_${decision.decisionNumber}.pdf`}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-md transition-colors"
-                  title="تنزيل النسخة الممسوحة"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>تنزيل PDF</span>
-                </a>
-              )}
+              <a
+                href={pdfUrl}
+                download={decision.pdfAttachment?.filename || `قرار_${decision.decisionNumber}.pdf`}
+                className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-md transition-colors"
+                title="تنزيل النسخة الممسوحة"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>تنزيل PDF</span>
+              </a>
 
               <button
                 type="button"
                 onClick={() => uploadInputRef.current?.click()}
                 className="inline-flex items-center gap-1 px-2.5 py-1 bg-stone-700 hover:bg-stone-600 text-stone-200 rounded-md transition-colors cursor-pointer"
-                title="استبدال النسخة الممسوحة بملف آخر"
+                title="استبدال النسخة الممسوحة بمستند آخر صالح"
               >
                 <RefreshCw className="w-3 h-3 text-amber-400" />
-                <span>استبدال</span>
+                <span>استبدال بمستند آخر</span>
               </button>
               <button
                 type="button"
@@ -457,75 +470,93 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
           </div>
 
           {/* PDF Viewer Iframe */}
-          {pdfUrl ? (
-            <iframe
-              src={pdfUrl}
-              title="عرض النسخة الرسمية الممسوحة ضوئياً"
-              className="w-full flex-1 border-0 bg-stone-900"
-            />
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-stone-300 font-cairo space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto">
-                <FileCheck className="w-6 h-6" />
-              </div>
-              <div className="text-white font-bold text-sm">
-                الوثيقة الرسمية: {decision.pdfAttachment?.filename || 'نسخة رسمية مسجلة'}
-              </div>
-              <p className="text-xs text-stone-400 max-w-md leading-relaxed">
-                النسخة الممسوحة مسجلة ومعتمدة لدى ديوان الوزارة. يمكنك تنزيلها أو استعراض نصها المكتوب لتيسير النقل والاقتباس.
-              </p>
-              <div className="flex items-center gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => exportDecisionAsPdf(decision)}
-                  className="px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
-                >
-                  طباعة / تصدير PDF رسمياً
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('written_text')}
-                  className="px-3.5 py-2 bg-stone-700 hover:bg-stone-600 text-stone-200 rounded-xl text-xs font-bold cursor-pointer transition-colors"
-                >
-                  استعراض النص المكتوب (Word)
-                </button>
-              </div>
-            </div>
-          )}
+          <iframe
+            src={pdfUrl}
+            title="عرض النسخة الرسمية الممسوحة ضوئياً"
+            className="w-full flex-1 border-0 bg-stone-900"
+          />
         </div>
       ) : (
-        /* Empty State: Prompt User to Upload the Scanned PDF */
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 sm:p-12 text-stone-300 space-y-4 max-w-xl mx-auto font-cairo">
-          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shadow-inner">
-            <FileUp className="w-8 h-8" />
+        /* Diagnostic & Immediate Replacement Panel when PDF is not available in storage */
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 sm:p-10 text-stone-300 font-cairo max-w-2xl mx-auto space-y-5">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto shadow-inner">
+            <AlertCircle className="w-8 h-8" />
           </div>
-          <div className="space-y-1">
-            <h4 className="text-lg font-bold text-white">
-              النسخة الرسمية الممسوحة ضوئياً لهذا القرار لم تُرفع بعد
-            </h4>
-            <p className="text-xs text-stone-400 leading-relaxed">
-              وفقاً للنظام، النسخة الرسمية للقرار هي النسخة الممسوحة ضوئياً من الجريدة الرسمية أو الوقائع المصرية بصيغة PDF. قم برفعها لتكون معتمدة ومتاحة للمعاينة والتنزيل دائماً.
+
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>فحص المنظومة: مستند PDF غير متوفر محلياً على هذا الجهاز</span>
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold text-white">
+              يلزم رفع مستند PDF صالح أو استبدال النسخة الحالية
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-400 leading-relaxed font-sans max-w-xl">
+              {decision.pdfAttachment?.filename ? (
+                <>
+                  القرار مسجل بالاسم: <strong className="text-stone-200">«{decision.pdfAttachment.filename}»</strong>، لكن الملف الرقمي الثنائي لم يُخزن في ذاكرة متصفحك أو تم تفريغه.
+                  لتمكين استعراض النسخة الممسوحة ضوئياً بدقة، يرجى رفع ملف PDF صالح للعمل ليتم حفظه فوراً.
+                </>
+              ) : (
+                <>
+                  لم يتم إرفاق مستند PDF رسمي ممسوح ضوئياً لهذا القرار بعد. يرجى رفع ملف PDF المعتمد ليكون متاحاً دائماً للاستعراض والتنزيل والمطابقة.
+                </>
+              )}
             </p>
           </div>
 
-          <div className="pt-2 flex flex-col sm:flex-row items-center gap-3 w-full justify-center">
+          {/* Drag & Drop Upload & Replacement Box */}
+          <div
+            onDragOver={(e) => { e.preventDefault(); setIsDraggingPdf(true); }}
+            onDragLeave={() => setIsDraggingPdf(false)}
+            onDrop={async (e) => {
+              e.preventDefault();
+              setIsDraggingPdf(false);
+              const file = e.dataTransfer.files?.[0];
+              if (file) handleDirectUploadPdfFile(file);
+            }}
+            className={`w-full p-6 sm:p-8 rounded-2xl border-2 border-dashed transition-all ${
+              isDraggingPdf
+                ? 'border-amber-400 bg-amber-500/15 scale-[1.02]'
+                : 'border-stone-700 bg-stone-850/60 hover:border-stone-500 hover:bg-stone-800/80'
+            }`}
+          >
+            <Upload className="w-8 h-8 text-amber-400 mx-auto mb-3 opacity-90" />
+            <div className="text-sm font-bold text-white mb-1">
+              اسحب وأفلت ملف الـ PDF هنا لاستبداله فوراً
+            </div>
+            <div className="text-xs text-stone-400 mb-4 font-sans">
+              يدعم ملفات PDF الرسمية الممسوحة ضوئياً بحجم حتى 50 ميجابايت
+            </div>
+
             <button
               type="button"
               onClick={() => uploadInputRef.current?.click()}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs transition-colors shadow-md cursor-pointer"
+              className="btn-shimmer inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition-transform active:scale-95 cursor-pointer"
             >
               <FileUp className="w-4 h-4" />
-              <span>اختيار ورفع النسخة الممسوحة (PDF) الآن</span>
+              <span>اختيار ورفع مستند PDF صالح للعمل الآن 📤</span>
+            </button>
+          </div>
+
+          {/* Alternate Options */}
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab('written_text')}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-xs font-semibold border border-stone-700 transition-colors cursor-pointer"
+            >
+              <FileText className="w-4 h-4 text-sky-400" />
+              <span>استعراض النص المكتوب (Word) بدلاً من ذلك</span>
             </button>
 
             <button
               type="button"
               onClick={() => exportDecisionAsPdf(decision)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
-              title="معاينة أو طباعة كـ PDF بديلاً مؤقتاً لحين رفع النسخة الممسوحة"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-xs font-semibold border border-stone-700 transition-colors cursor-pointer"
             >
-              <Printer className="w-4 h-4 text-stone-400" />
-              <span>معاينة إلكترونية كـ PDF مؤقتاً</span>
+              <Printer className="w-4 h-4 text-amber-400" />
+              <span>طباعة / تصدير PDF من نصوص القرار المعتمدة</span>
             </button>
           </div>
         </div>
@@ -1036,8 +1067,16 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
               <span>نص القرار (Word)</span>
             </button>
 
-            {/* Scanned Official PDF - Direct Full Window Preview */}
-            {pdfUrl ? (
+            {/* Scanned Official PDF - Direct Full Window Preview & Health Status */}
+            {loadingPdf ? (
+              <button
+                type="button"
+                className="px-3 py-1.5 rounded-md font-semibold bg-stone-800 text-stone-300 flex items-center gap-1.5 cursor-wait"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                <span>فحص الـ PDF...</span>
+              </button>
+            ) : pdfUrl ? (
               <a
                 href={pdfUrl}
                 target="_blank"
@@ -1052,10 +1091,10 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
               >
                 <FileDown className="w-3.5 h-3.5 text-rose-300" />
                 <span>النسخة الممسوحة (PDF)</span>
+                <span className="px-1.5 py-0.2 rounded text-[10px] bg-emerald-500/25 text-emerald-300 font-bold border border-emerald-500/30">
+                  ✓ متوفر
+                </span>
                 <ExternalLink className="w-3 h-3 text-rose-200 opacity-90" />
-                {decision.pdfAttachment && (
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" title="مرفقة ومحفوظة" />
-                )}
               </a>
             ) : (
               <button
@@ -1063,13 +1102,16 @@ export const DecisionViewModal: React.FC<DecisionViewModalProps> = ({
                 onClick={() => setActiveTab('scanned_pdf')}
                 className={`px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   activeTab === 'scanned_pdf'
-                    ? 'bg-rose-600 text-white shadow-xs'
-                    : 'text-stone-300 hover:text-white'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'text-stone-300 hover:text-white hover:bg-stone-700/60'
                 }`}
-                title="عرض النسخة الممسوحة ضوئياً"
+                title="المستند غير متوفر محلياً - انقر لرفعه أو استبداله بنسخة صالحة"
               >
-                <FileDown className="w-3.5 h-3.5 text-rose-300" />
+                <FileDown className="w-3.5 h-3.5 text-amber-400" />
                 <span>النسخة الممسوحة (PDF)</span>
+                <span className="px-1.5 py-0.2 rounded text-[10px] bg-amber-500/25 text-amber-300 font-bold border border-amber-500/30">
+                  ⚠️ يلزم رفعه
+                </span>
               </button>
             )}
 

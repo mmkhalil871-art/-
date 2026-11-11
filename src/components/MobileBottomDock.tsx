@@ -109,15 +109,15 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
           <span className="text-[10px] font-medium leading-tight">القراءة</span>
         </button>
 
-        {/* APK App / Install */}
+        {/* Mobile App Download & Install */}
         <button
           type="button"
           onClick={onOpenApkModal}
-          className="flex flex-col items-center justify-center p-1 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all text-center cursor-pointer text-sky-600 dark:text-sky-400 font-bold"
-          title="تطبيق الهاتف APK"
+          className="flex flex-col items-center justify-center p-1 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-all text-center cursor-pointer text-emerald-600 dark:text-emerald-400 font-bold"
+          title="تحميل وتثبيت تطبيق الهاتف الجوال (بدون إنترنت)"
         >
           <Smartphone className="w-4 h-4 mb-0.5" />
-          <span className="text-[10px] leading-tight">APK</span>
+          <span className="text-[10px] leading-tight">تطبيق الهاتف</span>
         </button>
       </div>
     </nav>

@@ -62,7 +62,7 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
   );
   const [status, setStatus] = useState<DecisionStatus>('نافذ');
   const [category, setCategory] = useState(CATEGORIES[1]); // e.g. عقود العمل والتشغيل
-  const [relatedArticlesInput, setRelatedArticlesInput] = useState('المادة 14');
+  const [relatedArticlesInput, setRelatedArticlesInput] = useState('المادة 72، المادة 74');
   const [officialReference, setOfficialReference] = useState('');
   const [preamble, setPreamble] = useState(DEFAULT_PREAMBLE_TEMPLATE);
   const [articles, setArticles] = useState<DecisionArticle[]>([
@@ -138,7 +138,7 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
       setEffectiveDate(new Date().toISOString().split('T')[0]);
       setStatus('نافذ');
       setCategory(CATEGORIES[1]);
-      setRelatedArticlesInput('المادة 14');
+      setRelatedArticlesInput('المادة 72، المادة 74');
       setLegalBasisSummary('');
       setExecutingSubject('');
       setOfficialReference(`ق و / 14-2025 / ${Math.floor(Math.random() * 900 + 100)}`);
@@ -744,7 +744,7 @@ export const DecisionFormModal: React.FC<DecisionFormModalProps> = ({
               type="text"
               value={relatedArticlesInput}
               onChange={(e) => setRelatedArticlesInput(e.target.value)}
-              placeholder="مثال: المادة 14، المادة 18، المادة 32"
+              placeholder="مثال: المادة 50، المادة 208، المادة 72"
               className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-lg focus:ring-1 focus:ring-amber-500 focus:outline-hidden font-mono text-stone-800"
             />
           </div>

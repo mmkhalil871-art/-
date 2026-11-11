@@ -129,45 +129,48 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
 
   return (
     <article
-      className={`group relative overflow-hidden rounded-2xl border p-5 sm:p-6 transition-all duration-200 flex flex-col justify-between specular-border-t card-elevated-hover ${
+      className={`group relative overflow-hidden rounded-2xl border p-5 sm:p-6 transition-all duration-300 flex flex-col justify-between specular-border-t hover:-translate-y-1 hover:shadow-xl ${
         activeTheme.isDark
-          ? 'bg-zinc-850/90 border-zinc-800 hover:border-zinc-700 text-zinc-100 shadow-xs'
+          ? 'bg-zinc-850/90 border-zinc-800 hover:border-amber-500/40 text-zinc-100 shadow-sm'
           : activeTheme.id === 'parchment'
-          ? 'bg-[#fffdf9] border-[#e6dbc9] hover:border-[#b48d61] text-[#281d14] shadow-xs'
-          : 'bg-white border-stone-200/90 hover:border-stone-300 text-stone-900 shadow-xs'
+          ? 'bg-[#fffdf9] border-[#e6dbc9] hover:border-[#b48d61] text-[#281d14] shadow-sm'
+          : 'bg-white border-stone-200/90 hover:border-amber-500/40 text-stone-900 shadow-sm'
       }`}
       style={{
         boxShadow: decision.isFavorite
-          ? '0 4px 20px -4px rgba(245, 158, 11, 0.15)'
+          ? '0 6px 24px -4px rgba(245, 158, 11, 0.2)'
           : undefined,
       }}
     >
       {/* Delicate Legal Scales Watermark in background */}
-      <div className="absolute -left-6 -bottom-6 pointer-events-none opacity-[0.035] group-hover:opacity-[0.075] transition-opacity duration-300 text-current">
+      <div className="absolute -left-6 -bottom-6 pointer-events-none opacity-[0.03] group-hover:opacity-[0.07] transition-opacity duration-300 text-current">
         <Scale className="w-32 h-32 transform -rotate-12" strokeWidth={1.2} />
       </div>
 
       <div>
-        {/* Top Kicker */}
-        <div className="flex items-center justify-between text-xs opacity-80 mb-2.5">
+        {/* Top Kicker - Modern Clean Metadata Row */}
+        <div className="flex items-center justify-between text-xs opacity-85 mb-3">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-mono tabular-nums font-bold flex items-center gap-1.5">
-              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
                 {decision.legislationType || 'قرار وزاري'}
               </span>
               <span>رقم {decision.decisionNumber} لسنة {decision.year}</span>
             </span>
             <span aria-hidden="true" className="opacity-30">·</span>
-            <span className="opacity-75">{decision.category}</span>
+            <span className="opacity-80 font-medium">{decision.category}</span>
             <span aria-hidden="true" className="opacity-30">·</span>
-            <span className={`flex items-center gap-1 ${getStatusColor(decision.status)}`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-current" />
+            <span className={`inline-flex items-center gap-1.5 ${getStatusColor(decision.status)}`}>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
               <span>{decision.status}</span>
             </span>
             {decision.pdfAttachment && (
               <>
                 <span aria-hidden="true" className="opacity-30">·</span>
-                <span className="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300/60 px-1.5 py-0.5 rounded text-[11px] font-bold">
+                <span className="text-rose-700 dark:text-rose-300 bg-rose-500/10 border border-rose-500/25 px-2 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1">
                   ✓ PDF رسمي
                 </span>
               </>
@@ -178,7 +181,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           <button
             type="button"
             onClick={() => onToggleFavorite(decision.id)}
-            className="p-1.5 rounded-lg opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer hover:scale-110 active:scale-95"
             title={decision.isFavorite ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'}
           >
             <Star
@@ -192,13 +195,13 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
         {/* Title */}
         <h3
           onClick={() => onView(decision, 'summary')}
-          className="text-base sm:text-lg font-bold tracking-tight mb-2.5 cursor-pointer leading-snug hover:opacity-80 transition-opacity"
+          className="text-base sm:text-lg font-black tracking-tight mb-2.5 cursor-pointer leading-snug hover:opacity-80 transition-opacity"
         >
           {decision.title}
         </h3>
 
         {/* Summary or Legal Basis */}
-        <p className="text-xs opacity-80 line-clamp-3 mb-4 leading-relaxed font-sans">
+        <p className="text-xs opacity-75 line-clamp-3 mb-4 leading-relaxed font-sans">
           {decision.legalBasisSummary || decision.executingSubject || decision.preamble}
         </p>
 
@@ -361,7 +364,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
         <button
           type="button"
           onClick={() => onView(decision, 'summary')}
-          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 min-h-[38px] text-xs font-bold rounded-xl border transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[40px] text-xs font-extrabold rounded-2xl border transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shadow-2xs"
           style={{
             backgroundColor: `${activeAccent.colorHex}15`,
             borderColor: `${activeAccent.colorHex}35`,
@@ -379,7 +382,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           <button
             type="button"
             onClick={() => onView(decision, 'scanned_pdf')}
-            className="inline-flex items-center justify-center gap-1 px-2.5 py-2 min-h-[38px] text-xs font-bold rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/80 text-rose-700 dark:text-rose-300 transition-colors active:scale-95 cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 min-h-[40px] text-xs font-bold rounded-2xl border border-rose-300/80 dark:border-rose-900/60 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/80 text-rose-700 dark:text-rose-300 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shadow-2xs"
             title="استعراض النسخة الرسمية الممسوحة ضوئياً (PDF)"
           >
             <FileDown className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
@@ -390,7 +393,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           <button
             type="button"
             onClick={() => exportDecisionAsWord(decision)}
-            className="inline-flex items-center justify-center gap-1 px-2.5 py-2 min-h-[38px] text-xs font-bold rounded-xl border border-sky-200 dark:border-sky-900/60 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-950/80 text-sky-700 dark:text-sky-300 transition-colors active:scale-95 cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 min-h-[40px] text-xs font-bold rounded-2xl border border-sky-300/80 dark:border-sky-900/60 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-950/80 text-sky-700 dark:text-sky-300 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shadow-2xs"
             title="تحميل نسخة وورد (Word .doc) مكتوبة لتيسير النقل"
           >
             <FileText className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
@@ -402,7 +405,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
             <button
               type="button"
               onClick={() => setShowSaveMenu(!showSaveMenu)}
-              className="p-2 min-h-[38px] min-w-[38px] flex items-center justify-center rounded-xl border border-stone-200 dark:border-zinc-700 hover:bg-black/5 dark:hover:bg-white/5 opacity-75 hover:opacity-100 transition-colors cursor-pointer"
+              className="p-2 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-2xl border border-stone-200 dark:border-zinc-700 hover:bg-black/5 dark:hover:bg-white/5 opacity-75 hover:opacity-100 transition-all cursor-pointer"
               title="خيارات إضافية"
             >
               <ChevronDown className="w-3.5 h-3.5" />

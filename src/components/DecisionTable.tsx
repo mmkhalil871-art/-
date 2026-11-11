@@ -180,12 +180,12 @@ export const DecisionTable: React.FC<DecisionTableProps> = ({
 
   return (
     <div
-      className={`rounded-xl border overflow-hidden shadow-2xs transition-colors duration-200 ${
+      className={`rounded-2xl border overflow-hidden shadow-sm specular-border-t transition-colors duration-200 ${
         activeTheme.isDark
           ? 'bg-zinc-800/80 border-zinc-700/80 text-zinc-100'
           : activeTheme.id === 'parchment'
           ? 'bg-[#fffdf9] border-[#e4d7c5] text-[#281d14]'
-          : 'bg-white border-stone-200 text-stone-800'
+          : 'bg-white border-stone-200/90 text-stone-800'
       }`}
     >
       <div className="overflow-x-auto">

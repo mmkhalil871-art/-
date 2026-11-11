@@ -19,7 +19,8 @@ import { usePWAInstall } from '../hooks/usePWAInstall';
 import {
   downloadWindowsDesktopLauncher,
   downloadWindowsShortcut,
-  downloadPortableOfflineApp
+  downloadPortableOfflineApp,
+  downloadMobilePhoneApp
 } from '../utils/desktopAppLauncher';
 import { MinisterialDecision } from '../types/decision';
 import { LaborLawInfo } from '../data/laborLawData';
@@ -231,23 +232,42 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
           </div>
 
           {/* Option 3: Mobile Devices */}
-          <div className="p-4 bg-stone-50 border border-stone-200 rounded-xl space-y-2.5">
-            <div className="flex items-center gap-2 text-stone-900 font-bold text-xs sm:text-sm">
-              <Smartphone className="w-4 h-4 text-amber-600" />
-              <span>على الهاتف المحمول واللوحي (Android و iOS)</span>
+          <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-950/15 via-emerald-900/10 to-stone-50 border-2 border-emerald-500/40 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 text-stone-900 font-bold text-xs sm:text-sm">
+                <Smartphone className="w-5 h-5 text-emerald-600" />
+                <span>تطبيق الهاتف الجوال المستقل (Android و iPhone)</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  تحميل فوري
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  downloadMobilePhoneApp(decisions, law);
+                  showSuccess('تم تنزيل نسخة الهاتف الجوال بنجاح! افتح الملف بهاتفك وسيعمل 100% بدون إنترنت.');
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
+              >
+                <Download className="w-4 h-4" />
+                <span>تحميل نسخة الهاتف مباشرة (أوفلاين)</span>
+              </button>
             </div>
+            <p className="text-xs text-stone-600 leading-relaxed">
+              يمكنك تنزيل ملف التطبيق المخصص للهواتف المحمولة مباشرة دون متجر، ويشمل القرارات وقانون العمل ويعمل أوفلاين بالكامل:
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-stone-600 leading-relaxed">
               <div className="bg-white p-3 rounded-lg border border-stone-200">
                 <span className="font-bold text-stone-800 block mb-1">
-                  📱 هواتف أندرويد (Chrome):
+                  📱 هواتف أندرويد (Chrome / Samsung):
                 </span>
-                اضغط على القائمة (⋮) ثم اختر <strong>"تثبيت التطبيق"</strong> أو <strong>"الإضافة للشاشة الرئيسية"</strong> وسيعمل كبرنامج هاتف دون الحاجة لمتجر تطبيقات.
+                حمّل الملف أو افتح المنظومة واضغط القائمة (⋮) ثم اختر <strong>"تثبيت التطبيق"</strong> أو <strong>"الإضافة للشاشة الرئيسية"</strong>.
               </div>
               <div className="bg-white p-3 rounded-lg border border-stone-200">
                 <span className="font-bold text-stone-800 block mb-1">
-                  🍏 آيفون / آيباد (Safari):
+                  🍏 هواتف آيفون (Safari):
                 </span>
-                اضغط على زر المشاركة <strong>📤</strong> أسفل شاشة Safari ثم اختر <strong>"إضافة إلى الشاشة الرئيسية" 📲</strong>.
+                اضغط على زر المشاركة <strong>📤</strong> أسفل متصفح Safari ثم اختر <strong>"إضافة إلى الشاشة الرئيسية" 📲</strong>.
               </div>
             </div>
           </div>

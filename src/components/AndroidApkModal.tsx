@@ -12,21 +12,38 @@ import {
   Copy,
   Check,
   Sparkles,
-  Info
+  HardDrive,
+  WifiOff,
+  Monitor
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { MinisterialDecision } from '../types/decision';
+import { LaborLawInfo } from '../data/laborLawData';
+import { downloadMobilePhoneApp } from '../utils/desktopAppLauncher';
 
 interface AndroidApkModalProps {
   isOpen: boolean;
   onClose: () => void;
+  decisions?: MinisterialDecision[];
+  law?: LaborLawInfo | null;
+  effectiveMode?: 'mobile' | 'desktop';
+  onToggleDeviceMode?: () => void;
 }
 
-export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClose }) => {
+export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({
+  isOpen,
+  onClose,
+  decisions = [],
+  law,
+  effectiveMode,
+  onToggleDeviceMode,
+}) => {
   const { activeTheme, activeAccent } = useTheme();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [installState, setInstallState] = useState<'idle' | 'installing' | 'installed'>('idle');
   const [copiedLink, setCopiedLink] = useState(false);
   const [showDirectSteps, setShowDirectSteps] = useState(true);
+  const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const handleBeforeInstall = (e: Event) => {
@@ -39,6 +56,12 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
   }, []);
 
   if (!isOpen) return null;
+
+  const handleDownloadMobileApp = () => {
+    downloadMobilePhoneApp(decisions, law);
+    setDownloadSuccessMessage('تم تنزيل نسخة الهاتف الجوال بنجاح! افتح الملف في هاتفك واضغط "إضافة إلى الشاشة الرئيسية" ليعمل كتطبيق دائم.');
+    setTimeout(() => setDownloadSuccessMessage(null), 7000);
+  };
 
   const handleNativeInstall = async () => {
     if (deferredPrompt) {
@@ -117,6 +140,89 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
 
         {/* Body */}
         <div className="p-5 sm:p-6 overflow-y-auto space-y-5 text-xs sm:text-sm">
+          {/* Download Success Banner */}
+          {downloadSuccessMessage && (
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-400 dark:border-emerald-600 rounded-xl text-emerald-900 dark:text-emerald-200 text-xs flex items-center gap-2.5 animate-fadeIn shadow-xs">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div className="font-semibold leading-relaxed">{downloadSuccessMessage}</div>
+            </div>
+          )}
+
+          {/* Primary Method: Direct 1-Tap Mobile Phone App Download (Hero Card) */}
+          <div className="p-5 rounded-2xl border-2 border-emerald-500 bg-gradient-to-br from-emerald-950/80 via-emerald-900/60 to-stone-900 text-white space-y-4 shadow-lg">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500 text-stone-950 flex items-center justify-center font-bold shadow-md shrink-0">
+                  <Smartphone className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-400 text-stone-950 shadow-xs">
+                      ⚡ تحميل مباشر للهاتف 100%
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/30 text-emerald-200 border border-emerald-400/40">
+                      يعمل أوفلاين بدون نت
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-base sm:text-lg text-white">
+                    تحميل نسخة الهاتف الجوال مباشرة (ملف تطبيق كامل بدون متجر)
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-emerald-100/90 leading-relaxed">
+              تم بناء هذه النسخة خصيصاً لشاشات الهواتف الذكية (Android و iPhone): يتم تنزيل ملف التطبيق مباشرة إلى مجلد التنزيلات (Downloads) بهاتفك، ويفتح في أي متصفح (Chrome أو Safari أو Samsung Internet) ليعمل كتطبيق هاتف متكامل مع شريط ملاحة سفلي للمس، ومحرك بحث فوري، ونصوص القرارات الوزارية الـ 17 وقانون العمل 14 لسنة 2025 كاملة.
+            </p>
+
+            {/* Feature Highlights Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-black/40 p-3 rounded-xl border border-emerald-500/30">
+              <div className="flex items-center gap-2 text-emerald-200">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>تحميل مباشر دون الحاجة لمتجر Google Play أو أذونات خاصة</span>
+              </div>
+              <div className="flex items-center gap-2 text-emerald-200">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>يعمل 100% بدون اتصال بالإنترنت (Offline) ولا يستهلك باقة البيانات</span>
+              </div>
+              <div className="flex items-center gap-2 text-emerald-200">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>مدمج به القرارات وقانون العمل والمفضلة والوضع الليلي</span>
+              </div>
+              <div className="flex items-center gap-2 text-emerald-200">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>إمكانية إضافته للشاشة الرئيسية ليعمل بملء الشاشة كأي تطبيق عادي</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-1 flex items-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={handleDownloadMobileApp}
+                className="px-6 py-3.5 bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 active:from-emerald-600 active:to-emerald-500 text-stone-950 font-extrabold rounded-xl text-sm shadow-md transition-all cursor-pointer flex items-center gap-2 hover:scale-[1.02] active:scale-95"
+              >
+                <Download className="w-5 h-5 text-stone-950" />
+                <span>تحميل نسخة الهاتف الجوال مباشرة الآن (ملف كامل)</span>
+              </button>
+
+              {onToggleDeviceMode && (
+                <button
+                  type="button"
+                  onClick={onToggleDeviceMode}
+                  className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer border border-white/20"
+                >
+                  <Monitor className="w-4 h-4 text-amber-300" />
+                  <span>
+                    {effectiveMode === 'mobile'
+                      ? 'التبديل لواجهة الحاسب الكاملة'
+                      : 'معاينة واجهة الموبايل على الشاشة'}
+                  </span>
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Diagnostic Note: Why raw APK files fail to open on Android */}
           <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-50/70 dark:bg-amber-950/25 text-amber-900 dark:text-amber-200 space-y-2">
             <div className="flex items-center gap-2 font-bold text-xs sm:text-sm">
@@ -126,12 +232,12 @@ export const AndroidApkModal: React.FC<AndroidApkModalProps> = ({ isOpen, onClos
             <p className="text-xs opacity-90 leading-relaxed pr-1">
               نظام أندرويد الحديث (Android 9 فما فوق) يشترط أمنياً أن تكون ملفات الـ APK مجمّعة ثنائياً وموقعة بشهادة رقمية رسمية معتمدة من Google، وإلا يرفض الهاتف تثبيتها ويُظهر خطأ <em>«حدثت مشكلة أثناء تحليل الحزمة»</em>.
               <br />
-              <strong>الحل المعتمد من Google:</strong> قامت شركة Google بتوفير ميزة <strong>التثبيت التلقائي الرسمي (WebAPK)</strong> التي تجمع وتثبت التطبيق في هاتفك فوراً ومجاناً دون أي أخطاء!
+              <strong>الحل المعتمد والمتاح أعلاه:</strong> قمنا بتوفير <strong>ملف التطبيق المستقل المباشر</strong> الذي يعمل فوراً دون أخطاء حزمة، بالإضافة إلى ميزة <strong>التثبيت التلقائي الرسمي (WebAPK)</strong> أدناه!
             </p>
           </div>
 
-          {/* Guaranteed Method 1: Google Official 1-Tap Native Install (WebAPK) */}
-          <div className="p-5 rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/60 dark:bg-emerald-950/25 space-y-3.5 shadow-xs">
+          {/* Guaranteed Method 2: Google Official 1-Tap Native Install (WebAPK) */}
+          <div className="p-5 rounded-2xl border-2 border-sky-500/40 bg-sky-50/60 dark:bg-sky-950/25 space-y-3.5 shadow-xs">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs">
